@@ -20,20 +20,19 @@ const PDFLibrary = () => {
     const [selectedLibrary, setSelectedLibrary] = useState('');
     const [libraryPdfs, setLibraryPdfs] = useState({});
 
-    // Cargar bibliotecas al montar el componente
-    useEffect(() => {
-        loadLibraries();
-    }, [user]);
-
+    // Cargar bibliotecas y sus PDFs
     const loadLibraries = async () => {
         setIsLoading(true);
         try {
-            const { data, error } = await databaseService.getUserLibraries(user.id);
+            const { data: libs, error } = await databaseService.getUserLibraries(user.id);
             if (error) throw error;
             
-            console.log('Bibliotecas cargadas:', data); // Debug
-            setLibraries(data || []);
+            setLibraries(libs);
             
+            // Cargar PDFs para cada biblioteca
+            for (const library of libs) {
+                await loadPDFsForLibrary(library.id);
+            }
         } catch (error) {
             console.error('Error al cargar bibliotecas:', error);
             toast.error('Error al cargar las bibliotecas');
@@ -88,7 +87,13 @@ const PDFLibrary = () => {
     // Añadir esta función para manejar la subida de PDF
     const handlePdfUpload = async (e) => {
         const file = e.target.files[0];
+        console.log('Archivo seleccionado:', file); // Debug
+        
         if (file && file.type === 'application/pdf') {
+            if (file.size === 0) {
+                toast.error('El archivo PDF está vacío');
+                return;
+            }
             setSelectedFile(file);
             setShowPdfModal(true);
         } else {
@@ -106,13 +111,15 @@ const PDFLibrary = () => {
                 ...prev,
                 [libraryId]: data
             }));
+            
+            console.log('PDFs cargados para biblioteca:', libraryId, data); // Debug
         } catch (error) {
             console.error('Error al cargar PDFs:', error);
             toast.error('Error al cargar los PDFs de la biblioteca');
         }
     };
 
-    // Modificar la función handleAssignPdf
+    // Modificar handleAssignPdf para recargar los PDFs después de asignar uno nuevo
     const handleAssignPdf = async (e) => {
         e.preventDefault();
         if (!selectedLibrary) {
@@ -131,10 +138,12 @@ const PDFLibrary = () => {
                 fileName: selectedFile.name,
                 libraryId: selectedLibrary,
                 userId: user.id,
-                fileSize: selectedFile.size || 0  // Asegurarnos de que siempre sea un número
+                fileSize: selectedFile.size || 0,
+                file: selectedFile  // Añadir el archivo aquí
             };
 
             console.log('Datos a enviar:', fileData); // Debug
+            console.log('Tamaño del archivo:', selectedFile.size); // Debug
 
             const { data, error } = await databaseService.createPDF(fileData);
             
@@ -142,7 +151,9 @@ const PDFLibrary = () => {
                 throw new Error(error);
             }
 
+            // Recargar los PDFs de la biblioteca específica
             await loadPDFsForLibrary(selectedLibrary);
+            
             toast.success('PDF añadido correctamente');
             setShowPdfModal(false);
             setSelectedFile(null);
@@ -156,17 +167,39 @@ const PDFLibrary = () => {
         }
     };
 
+    // Cargar bibliotecas cuando el componente se monta
+    useEffect(() => {
+        if (user) {
+            loadLibraries();
+        }
+    }, [user]);
+
     return (
         <div className="pdf-library-container">
             <div className="library-header">
                 <h1>Mis Bibliotecas</h1>
-                <button 
-                    className="create-library-button"
-                    onClick={() => setShowForm(true)}
-                >
-                    <i className="fas fa-plus"></i>
-                    Nueva Biblioteca
-                </button>
+                <div className="header-buttons">
+                    <button 
+                        className="create-library-button"
+                        onClick={() => setShowForm(true)}
+                    >
+                        <i className="fas fa-plus"></i>
+                        Nueva Biblioteca
+                    </button>
+                    <div className="pdf-upload-button">
+                        <input
+                            type="file"
+                            id="pdf-upload"
+                            accept=".pdf"
+                            onChange={handlePdfUpload}
+                            style={{ display: 'none' }}
+                        />
+                        <label htmlFor="pdf-upload" className="upload-button">
+                            <i className="fas fa-file-pdf"></i>
+                            Subir PDF
+                        </label>
+                    </div>
+                </div>
             </div>
 
             {showForm && (
@@ -256,16 +289,28 @@ const PDFLibrary = () => {
                                         <small>PDFs: {library.pdf_count || 0}</small>
                                         <small>Creada: {new Date(library.created_at).toLocaleDateString()}</small>
                                     </div>
-                                    <div className="pdf-count">
-                                        {(libraryPdfs[library.id]?.length || 0)} PDFs
-                                    </div>
+                                    
+                                    {/* Lista de PDFs */}
                                     <div className="pdf-list">
-                                        {libraryPdfs[library.id]?.map(pdf => (
-                                            <div key={pdf.id} className="pdf-item">
-                                                <i className="fas fa-file-pdf"></i>
-                                                <span>{pdf.title}</span>
-                                            </div>
-                                        ))}
+                                        <h4>PDFs en esta biblioteca:</h4>
+                                        {libraryPdfs[library.id]?.length > 0 ? (
+                                            libraryPdfs[library.id].map(pdf => (
+                                                <div key={pdf.id} className="pdf-item">
+                                                    <i className="fas fa-file-pdf"></i>
+                                                    <span className="pdf-title">{pdf.title}</span>
+                                                    <div className="pdf-actions">
+                                                        <button className="btn-open" title="Abrir PDF">
+                                                            <i className="fas fa-external-link-alt"></i>
+                                                        </button>
+                                                        <button className="btn-delete" title="Eliminar PDF">
+                                                            <i className="fas fa-trash-alt"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            ))
+                                        ) : (
+                                            <p className="no-pdfs">No hay PDFs en esta biblioteca</p>
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -273,21 +318,6 @@ const PDFLibrary = () => {
                     )}
                 </div>
             )}
-
-            {/* Botón para subir PDF */}
-            <div className="pdf-upload-button">
-                <input
-                    type="file"
-                    id="pdf-upload"
-                    accept=".pdf"
-                    onChange={handlePdfUpload}
-                    style={{ display: 'none' }}
-                />
-                <label htmlFor="pdf-upload" className="upload-button">
-                    <i className="fas fa-file-pdf"></i>
-                    Subir PDF
-                </label>
-            </div>
 
             {/* Modal de selección de biblioteca */}
             {showPdfModal && (

@@ -191,8 +191,80 @@
 
 .pdf-list {
     margin-top: 1rem;
-    border-top: 1px solid var(--border-color);
-    padding-top: 1rem;
+    padding: 1rem;
+    background: var(--bg-secondary);
+    border-radius: 8px;
+}
+
+.pdf-list h4 {
+    margin-bottom: 1rem;
+    color: var(--text-primary);
+    font-size: 1rem;
+}
+
+.pdf-item {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+    background: var(--bg-primary);
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.pdf-item:hover {
+    transform: translateX(4px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.pdf-item i {
+    color: var(--primary-color);
+    margin-right: 0.75rem;
+    font-size: 1.1rem;
+}
+
+.pdf-title {
+    flex: 1;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.pdf-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.pdf-actions button {
+    padding: 0.4rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-open {
+    background: var(--primary-color);
+    color: white;
+}
+
+.btn-delete {
+    background: var(--error-color);
+    color: white;
+}
+
+.btn-open:hover, .btn-delete:hover {
+    filter: brightness(110%);
+    transform: translateY(-2px);
+}
+
+.no-pdfs {
+    color: var(--text-secondary);
+    text-align: center;
+    padding: 1rem;
+    font-size: 0.9rem;
 }
 
 .pdf-grid {
@@ -238,44 +310,6 @@
     margin: 0;
     color: var(--text-secondary);
     font-size: 0.85rem;
-}
-
-.pdf-actions {
-    display: flex;
-    gap: 0.5rem;
-    flex-wrap: wrap;
-}
-
-.pdf-actions button {
-    padding: 0.5rem;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 0.9rem;
-    display: flex;
-    align-items: center;
-    gap: 0.3rem;
-    transition: all 0.2s ease;
-}
-
-.btn-open {
-    background: var(--primary-color);
-    color: white;
-}
-
-.btn-rename {
-    background: var(--secondary-color);
-    color: white;
-}
-
-.btn-delete {
-    background: var(--error-color);
-    color: white;
-}
-
-.btn-open:hover, .btn-rename:hover, .btn-delete:hover {
-    filter: brightness(110%);
-    transform: translateY(-1px);
 }
 
 .rename-container {
@@ -434,31 +468,6 @@
     outline: none;
     border-color: var(--primary-color);
     box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.1);
-}
-
-.pdf-item {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.5rem;
-    border-radius: 4px;
-    transition: background-color 0.2s ease;
-}
-
-.pdf-item:hover {
-    background: var(--bg-secondary);
-}
-
-.pdf-item i {
-    color: var(--primary-color);
-}
-
-.pdf-item span {
-    font-size: 0.9rem;
-    color: var(--text-primary);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
 }
 
 .pdf-count {

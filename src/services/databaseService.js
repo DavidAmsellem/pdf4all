@@ -81,6 +81,34 @@ export const databaseService = {
 
     createPDF: async (pdfData) => {
         try {
+            // Verificar que tenemos el archivo
+            if (!pdfData.file) {
+                throw new Error('No se ha proporcionado ningún archivo');
+            }
+
+            // 1. Primero subimos el archivo al storage
+            const fileExt = pdfData.fileName.split('.').pop();
+            const filePath = `${pdfData.userId}/${pdfData.libraryId}/${Date.now()}.${fileExt}`;
+
+            // Subir el archivo al bucket 'pdfs'
+            const { data: fileData, error: uploadError } = await supabase.storage
+                .from('pdfs')
+                .upload(filePath, pdfData.file, {
+                    contentType: 'application/pdf',
+                    cacheControl: '3600'
+                });
+
+            if (uploadError) {
+                console.error('Error al subir:', uploadError);
+                throw new Error('Error al subir el archivo: ' + uploadError.message);
+            }
+
+            // 2. Obtener la URL pública del archivo
+            const { data: { publicUrl } } = supabase.storage
+                .from('pdfs')
+                .getPublicUrl(filePath);
+
+            // 3. Crear el registro en la base de datos
             const { data: pdf, error: pdfError } = await supabase
                 .from('pdfs')
                 .insert({
@@ -88,17 +116,21 @@ export const databaseService = {
                     file_name: pdfData.fileName,
                     library_id: pdfData.libraryId,
                     user_id: pdfData.userId,
-                    file_size: parseInt(pdfData.fileSize) || 0  // Cambiado de size a file_size
+                    file_size: parseInt(pdfData.fileSize) || 0,
+                    storage_path: filePath,
+                    public_url: publicUrl
                 })
                 .select()
                 .single();
 
             if (pdfError) {
-                console.error('Error Supabase:', pdfError);
+                // Si hay error, eliminamos el archivo subido
+                await supabase.storage
+                    .from('pdfs')
+                    .remove([filePath]);
                 throw pdfError;
             }
 
-            // Refrescar la vista materializada después de insertar
             await supabase.rpc('refresh_library_pdf_counts');
 
             return { data: pdf, error: null };
@@ -147,6 +179,40 @@ export const databaseService = {
         } catch (error) {
             console.error('Error en moveToLibrary:', error);
             return { data: null, error };
+        }
+    },
+
+    // Añadir método para eliminar PDF
+    deletePDF: async (pdfId) => {
+        try {
+            // 1. Obtener información del PDF
+            const { data: pdf } = await supabase
+                .from('pdfs')
+                .select('storage_path')
+                .eq('id', pdfId)
+                .single();
+
+            if (pdf?.storage_path) {
+                // 2. Eliminar el archivo del storage
+                await supabase.storage
+                    .from('pdfs')
+                    .remove([pdf.storage_path]);
+            }
+
+            // 3. Eliminar el registro de la base de datos
+            const { error } = await supabase
+                .from('pdfs')
+                .delete()
+                .eq('id', pdfId);
+
+            if (error) throw error;
+
+            await supabase.rpc('refresh_library_pdf_counts');
+
+            return { success: true, error: null };
+        } catch (error) {
+            console.error('Error en deletePDF:', error);
+            return { success: false, error: error.message };
         }
     }
 };
