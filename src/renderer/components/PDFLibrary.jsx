@@ -3,6 +3,7 @@ import { useAuth } from '../../context/AuthContext';
 import { databaseService } from '../../services/databaseService';
 import { toast } from 'react-toastify';
 import './PDFLibrary.css'; // Asegúrate de que esta línea existe
+import { supabase } from '../../supabase/client';  // Añadir esta importación al inicio
 
 const PDFLibrary = () => {
     const { user } = useAuth();
@@ -19,6 +20,7 @@ const PDFLibrary = () => {
     const [selectedFile, setSelectedFile] = useState(null);
     const [selectedLibrary, setSelectedLibrary] = useState('');
     const [libraryPdfs, setLibraryPdfs] = useState({});
+    const [uploadingImage, setUploadingImage] = useState(null);
 
     // Cargar bibliotecas y sus PDFs
     const loadLibraries = async () => {
@@ -167,6 +169,100 @@ const PDFLibrary = () => {
         }
     };
 
+    const handleImageUpload = async (e, libraryId) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        if (!file.type.startsWith('image/')) {
+            toast.error('Por favor, selecciona una imagen válida');
+            return;
+        }
+
+        setUploadingImage(libraryId);
+        try {
+            // Subir imagen a Supabase Storage
+            const fileName = `library-cover-${Date.now()}-${file.name}`;
+            const { data: uploadData, error: uploadError } = await supabase.storage
+                .from('library-covers')
+                .upload(fileName, file);
+
+            if (uploadError) throw uploadError;
+
+            // Obtener URL pública
+            const { data: { publicUrl } } = supabase.storage
+                .from('library-covers')
+                .getPublicUrl(fileName);
+
+            // Actualizar biblioteca con la nueva imagen
+            const { error: updateError } = await supabase
+                .from('libraries')
+                .update({ cover_image: publicUrl })
+                .eq('id', libraryId);
+
+            if (updateError) throw updateError;
+
+            // Actualizar estado local
+            setLibraries(libraries.map(lib => 
+                lib.id === libraryId 
+                    ? { ...lib, cover_image: publicUrl }
+                    : lib
+            ));
+
+            toast.success('Imagen actualizada correctamente');
+        } catch (error) {
+            console.error('Error al subir imagen:', error);
+            toast.error('Error al actualizar la imagen');
+        } finally {
+            setUploadingImage(null);
+        }
+    };
+
+    // Función para abrir PDF
+    const handleOpenPdf = async (pdf) => {
+        try {
+            if (!pdf.public_url) {
+                toast.error('No se puede abrir el PDF: URL no disponible');
+                return;
+            }
+
+            // Abrir PDF usando la URL pública almacenada
+            window.open(pdf.public_url, '_blank');
+        } catch (error) {
+            console.error('Error al abrir PDF:', error);
+            toast.error('Error al abrir el PDF');
+        }
+    };
+
+    // Función para eliminar PDF
+    const handleDeletePdf = async (pdfId, libraryId) => {
+        if (!window.confirm('¿Estás seguro de que quieres eliminar este PDF?')) {
+            return;
+        }
+
+        try {
+            const { error } = await databaseService.deletePDF(pdfId);
+            if (error) throw error;
+
+            // Actualizar la lista de PDFs
+            setLibraryPdfs(prev => ({
+                ...prev,
+                [libraryId]: prev[libraryId].filter(pdf => pdf.id !== pdfId)
+            }));
+
+            // Actualizar el contador de PDFs en la biblioteca
+            setLibraries(libraries.map(lib => 
+                lib.id === libraryId 
+                    ? { ...lib, pdf_count: (lib.pdf_count || 0) - 1 }
+                    : lib
+            ));
+
+            toast.success('PDF eliminado correctamente');
+        } catch (error) {
+            console.error('Error al eliminar PDF:', error);
+            toast.error('Error al eliminar el PDF');
+        }
+    };
+
     // Cargar bibliotecas cuando el componente se monta
     useEffect(() => {
         if (user) {
@@ -280,7 +376,29 @@ const PDFLibrary = () => {
                         libraries.map(library => (
                             <div key={library.id} className="library-card animate-scale-in">
                                 <div className="library-cover">
-                                    <i className="fas fa-book-open"></i>
+                                    {library.cover_image ? (
+                                        <img 
+                                            src={library.cover_image} 
+                                            alt={library.name}
+                                            className={uploadingImage === library.id ? 'image-loading' : ''}
+                                        />
+                                    ) : (
+                                        <i className="fas fa-book-open"></i>
+                                    )}
+                                    <input
+                                        type="file"
+                                        id={`cover-upload-${library.id}`}
+                                        accept="image/*"
+                                        onChange={(e) => handleImageUpload(e, library.id)}
+                                        style={{ display: 'none' }}
+                                    />
+                                    <label 
+                                        htmlFor={`cover-upload-${library.id}`}
+                                        className="upload-image-button"
+                                        title="Cambiar imagen de portada"
+                                    >
+                                        <i className="fas fa-camera"></i>
+                                    </label>
                                 </div>
                                 <div className="library-info">
                                     <h3>{library.name}</h3>
@@ -299,10 +417,18 @@ const PDFLibrary = () => {
                                                     <i className="fas fa-file-pdf"></i>
                                                     <span className="pdf-title">{pdf.title}</span>
                                                     <div className="pdf-actions">
-                                                        <button className="btn-open" title="Abrir PDF">
+                                                        <button 
+                                                            className="btn-open" 
+                                                            title="Abrir PDF"
+                                                            onClick={() => handleOpenPdf(pdf)}
+                                                        >
                                                             <i className="fas fa-external-link-alt"></i>
                                                         </button>
-                                                        <button className="btn-delete" title="Eliminar PDF">
+                                                        <button 
+                                                            className="btn-delete" 
+                                                            title="Eliminar PDF"
+                                                            onClick={() => handleDeletePdf(pdf.id, library.id)}
+                                                        >
                                                             <i className="fas fa-trash-alt"></i>
                                                         </button>
                                                     </div>

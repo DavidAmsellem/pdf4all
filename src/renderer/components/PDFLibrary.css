@@ -1,8 +1,26 @@
 .pdf-library-container {
     padding: 2rem;
-    height: 100%;
-    background: var(--bg-primary);
+    min-height: 100vh;
+    background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+    height: 100vh;
     overflow-y: auto;
+    scroll-behavior: smooth;
+    scrollbar-width: thin;
+    scrollbar-color: var(--primary-color) var(--bg-secondary);
+}
+
+.pdf-library-container::-webkit-scrollbar {
+    width: 8px;
+}
+
+.pdf-library-container::-webkit-scrollbar-track {
+    background: var(--bg-secondary);
+    border-radius: 4px;
+}
+
+.pdf-library-container::-webkit-scrollbar-thumb {
+    background: var(--primary-color);
+    border-radius: 4px;
 }
 
 .library-header {
@@ -11,33 +29,45 @@
     align-items: center;
     margin-bottom: 2rem;
     padding-bottom: 1rem;
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: 2px solid rgba(255, 255, 255, 0.1);
 }
 
 .library-header h1 {
-    color: var(--text-primary);
-    font-size: 1.8rem;
-    margin: 0;
+    font-size: 2.5rem;
+    background: linear-gradient(45deg, var(--primary-color), #6366f1);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: titleGlow 2s ease-in-out infinite alternate;
 }
 
-.create-library-button {
+.header-buttons {
+    display: flex;
+    gap: 1rem;
+}
+
+.create-library-button,
+.upload-button {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 12px;
+    font-weight: 600;
+    cursor: pointer;
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    padding: 0.75rem 1.5rem;
-    background: var(--primary-color);
-    color: white;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: 500;
-    transition: all 0.2s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.create-library-button:hover {
-    background: var(--primary-color-dark);
+.create-library-button:hover,
+.upload-button:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+    background: var(--primary-color);
+    color: white;
 }
 
 /* Mejora del overlay y contenido del modal */
@@ -48,11 +78,12 @@
     right: 0;
     bottom: 0;
     background: rgba(0, 0, 0, 0.7);
-    backdrop-filter: blur(4px);
+    backdrop-filter: blur(5px);
     display: flex;
     align-items: center;
     justify-content: center;
     z-index: 1000;
+    animation: fadeIn 0.3s ease-out;
 }
 
 .modal-content {
@@ -61,11 +92,12 @@
     max-width: 600px;
     max-height: 90vh;
     overflow-y: auto;
-    background: #ffffff;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+    background: var(--bg-primary);
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
     border: 1px solid var(--border-color);
-    border-radius: 8px;
+    border-radius: 20px;
     padding: 2rem;
+    animation: slideUp 0.3s ease-out;
 }
 
 /* Mejora del botón de cerrar */
@@ -101,27 +133,52 @@
 
 .libraries-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 1.5rem;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 2rem;
+    padding: 1rem;
     margin: 2rem 0;
 }
 
 .library-card {
-    background: var(--bg-secondary);
-    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 16px;
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    position: relative;
     overflow: hidden;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.library-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    transform: translateX(-100%);
+    transition: 0.5s;
+}
+
+.library-card:hover::before {
+    transform: translateX(100%);
 }
 
 .library-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transform: translateY(-5px) scale(1.02);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
 }
 
 .library-cover {
-    height: 140px;
-    background: linear-gradient(135deg, var(--primary-color), var(--primary-color-dark));
+    position: relative;
+    width: 100%;
+    height: 160px;
+    overflow: hidden;
+    border-radius: 12px;
+    margin-bottom: 1rem;
+    background: linear-gradient(135deg, var(--bg-secondary), var(--bg-primary));
     display: flex;
     align-items: center;
     justify-content: center;
@@ -133,6 +190,40 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.library-cover:hover img {
+    transform: scale(1.05);
+}
+
+.library-cover .upload-image-button {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    padding: 8px;
+    background: rgba(0, 0, 0, 0.7);
+    border: none;
+    border-radius: 50%;
+    color: white;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.library-cover:hover .upload-image-button {
+    opacity: 1;
+}
+
+.library-cover .upload-image-button:hover {
+    background: var(--primary-color);
+    transform: scale(1.1);
+}
+
+.library-cover i {
+    font-size: 3rem;
+    color: var(--primary-color);
+    animation: float 3s ease-in-out infinite;
 }
 
 .library-info {
@@ -190,10 +281,10 @@
 }
 
 .pdf-list {
-    margin-top: 1rem;
+    margin-top: 1.5rem;
     padding: 1rem;
-    background: var(--bg-secondary);
-    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 12px;
 }
 
 .pdf-list h4 {
@@ -205,15 +296,17 @@
 .pdf-item {
     display: flex;
     align-items: center;
-    padding: 0.75rem;
-    margin-bottom: 0.5rem;
-    background: var(--bg-primary);
-    border-radius: 6px;
-    transition: all 0.2s ease;
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    animation: slideIn 0.3s ease-out forwards;
 }
 
 .pdf-item:hover {
-    transform: translateX(4px);
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateX(5px);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
@@ -235,14 +328,24 @@
 .pdf-actions {
     display: flex;
     gap: 0.5rem;
+    opacity: 0;
+    transition: opacity 0.2s ease;
 }
 
-.pdf-actions button {
-    padding: 0.4rem;
+.pdf-item:hover .pdf-actions {
+    opacity: 1;
+}
+
+.btn-open,
+.btn-delete {
+    padding: 0.5rem;
     border: none;
-    border-radius: 4px;
+    border-radius: 6px;
     cursor: pointer;
     transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .btn-open {
@@ -255,9 +358,15 @@
     color: white;
 }
 
-.btn-open:hover, .btn-delete:hover {
-    filter: brightness(110%);
+.btn-open:hover,
+.btn-delete:hover {
     transform: translateY(-2px);
+    filter: brightness(110%);
+}
+
+.btn-open:active,
+.btn-delete:active {
+    transform: translateY(0);
 }
 
 .no-pdfs {
@@ -382,14 +491,20 @@
 }
 
 .loading-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
     text-align: center;
     padding: 3rem;
     color: var(--text-secondary);
 }
 
 .loading-state i {
-    font-size: 2rem;
+    font-size: 2.5rem;
     color: var(--primary-color);
+    animation: spin 1s linear infinite;
     margin-bottom: 1rem;
 }
 
@@ -478,4 +593,72 @@
     font-size: 0.8rem;
     color: var(--text-secondary);
     margin-top: 0.5rem;
+}
+
+/* Animaciones */
+@keyframes titleGlow {
+    0% {
+        text-shadow: 0 0 10px rgba(99, 102, 241, 0.2);
+    }
+    100% {
+        text-shadow: 0 0 20px rgba(99, 102, 241, 0.4);
+    }
+}
+
+@keyframes float {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes imageLoading {
+    0% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+    100% {
+        background-position: 0% 50%;
+    }
 }

@@ -81,16 +81,9 @@ export const databaseService = {
 
     createPDF: async (pdfData) => {
         try {
-            // Verificar que tenemos el archivo
-            if (!pdfData.file) {
-                throw new Error('No se ha proporcionado ningún archivo');
-            }
-
-            // 1. Primero subimos el archivo al storage
-            const fileExt = pdfData.fileName.split('.').pop();
-            const filePath = `${pdfData.userId}/${pdfData.libraryId}/${Date.now()}.${fileExt}`;
-
-            // Subir el archivo al bucket 'pdfs'
+            // 1. Subir archivo al storage
+            const filePath = `${pdfData.userId}/${pdfData.libraryId}/${Date.now()}-${pdfData.fileName}`;
+            
             const { data: fileData, error: uploadError } = await supabase.storage
                 .from('pdfs')
                 .upload(filePath, pdfData.file, {
@@ -99,47 +92,36 @@ export const databaseService = {
                 });
 
             if (uploadError) {
-                console.error('Error al subir:', uploadError);
-                throw new Error('Error al subir el archivo: ' + uploadError.message);
+                console.error('Error al subir archivo:', uploadError);
+                throw new Error('Error al subir el archivo PDF');
             }
 
-            // 2. Obtener la URL pública del archivo
+            // 2. Obtener URL pública
             const { data: { publicUrl } } = supabase.storage
                 .from('pdfs')
                 .getPublicUrl(filePath);
 
-            // 3. Crear el registro en la base de datos
-            const { data: pdf, error: pdfError } = await supabase
+            // 3. Crear registro en la base de datos
+            const { data: pdf, error: dbError } = await supabase
                 .from('pdfs')
                 .insert({
                     title: pdfData.title,
                     file_name: pdfData.fileName,
                     library_id: pdfData.libraryId,
                     user_id: pdfData.userId,
-                    file_size: parseInt(pdfData.fileSize) || 0,
+                    file_size: pdfData.fileSize,
                     storage_path: filePath,
                     public_url: publicUrl
                 })
                 .select()
                 .single();
 
-            if (pdfError) {
-                // Si hay error, eliminamos el archivo subido
-                await supabase.storage
-                    .from('pdfs')
-                    .remove([filePath]);
-                throw pdfError;
-            }
-
-            await supabase.rpc('refresh_library_pdf_counts');
+            if (dbError) throw dbError;
 
             return { data: pdf, error: null };
         } catch (error) {
             console.error('Error en createPDF:', error);
-            return { 
-                data: null, 
-                error: error.message || 'Error al crear el PDF' 
-            };
+            return { data: null, error: error.message };
         }
     },
 
@@ -193,13 +175,13 @@ export const databaseService = {
                 .single();
 
             if (pdf?.storage_path) {
-                // 2. Eliminar el archivo del storage
+                // 2. Eliminar archivo del storage
                 await supabase.storage
                     .from('pdfs')
                     .remove([pdf.storage_path]);
             }
 
-            // 3. Eliminar el registro de la base de datos
+            // 3. Eliminar registro de la base de datos
             const { error } = await supabase
                 .from('pdfs')
                 .delete()
@@ -207,12 +189,10 @@ export const databaseService = {
 
             if (error) throw error;
 
-            await supabase.rpc('refresh_library_pdf_counts');
-
-            return { success: true, error: null };
+            return { error: null };
         } catch (error) {
             console.error('Error en deletePDF:', error);
-            return { success: false, error: error.message };
+            return { error: error.message };
         }
     }
 };
