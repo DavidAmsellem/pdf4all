@@ -6,7 +6,7 @@ const { getPDFDirectory } = require('./fileSystem');
 function createWindow() {
     const win = new BrowserWindow({
         width: 1200,
-        height: 800,
+        height: 900,
         frame: false,
         webPreferences: {
             nodeIntegration: false,

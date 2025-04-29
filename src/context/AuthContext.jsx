@@ -4,8 +4,8 @@ import { supabase, auth } from '../supabase/client'
 const AuthContext = createContext({})
 
 export const AuthProvider = ({ children }) => {
-    const [user, setUser] = useState(null)
-    const [loading, setLoading] = useState(true)
+    const [user, setUser] = useState(null);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         // Verificar sesión al cargar
@@ -36,13 +36,23 @@ export const AuthProvider = ({ children }) => {
         }
     }
 
+    const handleSignOut = async () => {
+        try {
+            await supabase.auth.signOut();
+            setUser(null);
+        } catch (error) {
+            console.error('Error al cerrar sesión:', error);
+            throw error;
+        }
+    };
+
     const value = {
         signUp: auth.signUp,
         signIn: auth.signIn,
-        signOut: auth.signOut,
+        signOut: handleSignOut, // Usamos nuestra función personalizada
         user,
         loading
-    }
+    };
 
     return (
         <AuthContext.Provider value={value}>

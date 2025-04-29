@@ -9,5 +9,6 @@ contextBridge.exposeInMainWorld('electron', {
   closeApp: () => ipcRenderer.invoke('close-app'),
   minimizeWindow: () => ipcRenderer.invoke('minimize-window'),
   maximizeWindow: () => ipcRenderer.invoke('maximize-window'),
-  closeWindow: () => ipcRenderer.invoke('close-window')
+  closeWindow: () => ipcRenderer.invoke('close-window'),
+  getPdfUrl: (fileName) => ipcRenderer.invoke('get-pdf-url', fileName)
 });

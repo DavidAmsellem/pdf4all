@@ -1,20 +1,26 @@
 import React from 'react';
+import { useAuth } from '../../context/AuthContext';
 import '../styles/Sidebar.css';
 
 const Sidebar = ({ onNavigate, currentView }) => {
+  const { signOut } = useAuth();
+
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      // No necesitamos hacer nada más aquí, el AuthContext 
+      // se encargará de redirigir a la pantalla de login
+    } catch (error) {
+      console.error('Error al cerrar sesión:', error);
+    }
+  };
+
   const menuItems = [
     { id: 'home', icon: 'home', label: 'Inicio' },
     { id: 'upload', icon: 'upload', label: 'Subir PDF' },
     { id: 'library', icon: 'folder', label: 'Mis PDFs' },
     { id: 'settings', icon: 'cog', label: 'Ajustes' }
   ];
-
-  const handleLogout = () => {
-    if (window.confirm('¿Estás seguro de que quieres cerrar la sesión?')) {
-      // Aquí puedes añadir la lógica de cierre de sesión
-      window.electron.closeApp();
-    }
-  };
 
   return (
     <div className="sidebar animate-slide-in">
@@ -41,7 +47,7 @@ const Sidebar = ({ onNavigate, currentView }) => {
           <span>Cerrar Sesión</span>
         </button>
         <span className="version-info">
-          <i className="fas fa-info-circle"></i> v1.2.0
+          <i className="fas fa-info-circle"></i> v1.0.0
         </span>
       </div>
     </div>

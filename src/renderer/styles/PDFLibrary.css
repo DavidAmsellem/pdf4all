@@ -136,3 +136,24 @@
 .btn-delete:hover {
   background: #c82333;
 }
+
+.pdf-library-container {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: var(--spacing-lg);
+    height: 100%;
+    padding: var(--spacing-lg);
+}
+
+.pdf-list {
+    overflow-y: auto;
+    max-height: calc(100vh - 150px);
+}
+
+.pdf-preview {
+    background: var(--surface-color);
+    border-radius: var(--border-radius-md);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+    height: calc(100vh - 150px);
+}
