@@ -9,6 +9,8 @@ import UploadPDF from './components/UploadPDF';
 import PDFLibrary from './components/PDFLibrary';
 import Settings from './components/Settings';
 import Auth from './components/Auth';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 function App() {
     const [currentView, setCurrentView] = useState('home');
@@ -50,6 +52,17 @@ function App() {
                     </div>
                 </main>
             </div>
+            <ToastContainer 
+                position="bottom-right"
+                autoClose={3000}
+                hideProgressBar={false}
+                newestOnTop
+                closeOnClick
+                rtl={false}
+                pauseOnFocusLoss
+                draggable
+                pauseOnHover
+            />
         </div>
     );
 }
