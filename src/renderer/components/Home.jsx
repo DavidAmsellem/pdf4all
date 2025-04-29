@@ -1,52 +1,77 @@
-import React from 'react';
-import '../styles/Home.css';
+import React, { useEffect, useState } from 'react';
+import { useAuth } from '../../context/AuthContext';
+import { databaseService } from '../../services/databaseService';
+import { toast } from 'react-toastify';
+import './Home.css';
 
 const Home = () => {
-  return (
-    <div className="home-container animate-fade-in">
-      <div className="welcome-section">
-        <i className="fas fa-book-reader"></i>
-        <h1>Bienvenido a PDF Biblioteca</h1>
-        <p>Tu gestor personal de documentos PDF</p>
-      </div>
+    const { user } = useAuth();
+    const [stats, setStats] = useState(null);
 
-      <div className="stats-grid">
-        <div className="stat-card">
-          <i className="fas fa-file-pdf"></i>
-          <h3>PDFs Totales</h3>
-          <p className="stat-number">0</p>
-        </div>
-        <div className="stat-card">
-          <i className="fas fa-calendar-alt"></i>
-          <h3>Último PDF</h3>
-          <p>No hay PDFs</p>
-        </div>
-        <div className="stat-card">
-          <i className="fas fa-hdd"></i>
-          <h3>Espacio Usado</h3>
-          <p>0 MB</p>
-        </div>
-      </div>
+    const loadStats = async () => {
+        try {
+            const { data, error } = await databaseService.getStats(user.id);
+            if (error) throw error;
+            setStats(data);
+        } catch (error) {
+            console.error('Error al cargar estadísticas:', error);
+            toast.error('Error al cargar estadísticas');
+        }
+    };
 
-      <div className="quick-actions">
-        <h2>Acciones Rápidas</h2>
-        <div className="actions-grid">
-          <button onClick={() => window.electron.openDirectory()}>
-            <i className="fas fa-folder-open"></i>
-            Abrir Carpeta
-          </button>
-          <button onClick={() => window.location.href = '#upload'}>
-            <i className="fas fa-upload"></i>
-            Subir PDF
-          </button>
-          <button onClick={() => window.location.href = '#library'}>
-            <i className="fas fa-books"></i>
-            Ver Biblioteca
-          </button>
+    useEffect(() => {
+        if (user) {
+            loadStats();
+        }
+    }, [user]);
+
+    const formatBytes = (bytes) => {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    };
+
+    return (
+        <div className="home-container">
+            <div className="welcome-section">
+                <h1>Bienvenido, {user?.email}</h1>
+                <p>Gestiona tus PDFs de forma fácil y organizada</p>
+            </div>
+
+            <div className="stats-dashboard">
+                <div className="stats-panel">
+                    <div className="stat-card">
+                        <i className="fas fa-file-pdf"></i>
+                        <div className="stat-info">
+                            <h3>PDFs Totales</h3>
+                            <p>{stats?.totalPdfs || 0}</p>
+                        </div>
+                    </div>
+                    <div className="stat-card">
+                        <i className="fas fa-database"></i>
+                        <div className="stat-info">
+                            <h3>Espacio Usado</h3>
+                            <p>{stats ? formatBytes(stats.totalSize) : '0 B'}</p>
+                        </div>
+                    </div>
+                    {stats?.lastUpdated && (
+                        <div className="stat-card">
+                            <i className="fas fa-clock"></i>
+                            <div className="stat-info">
+                                <h3>Último PDF Actualizado</h3>
+                                <p>{stats.lastUpdated.title}</p>
+                                <small>
+                                    En {stats.lastUpdated.library} - {stats.lastUpdated.date}
+                                </small>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </div>
         </div>
-      </div>
-    </div>
-  );
+    );
 };
 
 export default Home;

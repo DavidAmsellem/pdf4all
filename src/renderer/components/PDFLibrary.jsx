@@ -21,6 +21,7 @@ const PDFLibrary = () => {
     const [selectedLibrary, setSelectedLibrary] = useState('');
     const [libraryPdfs, setLibraryPdfs] = useState({});
     const [uploadingImage, setUploadingImage] = useState(null);
+    const [stats, setStats] = useState(null);
 
     // Cargar bibliotecas y sus PDFs
     const loadLibraries = async () => {
@@ -263,10 +264,32 @@ const PDFLibrary = () => {
         }
     };
 
+    // Función para cargar estadísticas
+    const loadStats = async () => {
+        try {
+            const { data, error } = await databaseService.getStats(user.id);
+            if (error) throw error;
+            setStats(data);
+        } catch (error) {
+            console.error('Error al cargar estadísticas:', error);
+            toast.error('Error al cargar estadísticas');
+        }
+    };
+
+    // Función para formatear bytes
+    const formatBytes = (bytes) => {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    };
+
     // Cargar bibliotecas cuando el componente se monta
     useEffect(() => {
         if (user) {
             loadLibraries();
+            loadStats();
         }
     }, [user]);
 
@@ -294,6 +317,24 @@ const PDFLibrary = () => {
                             <i className="fas fa-file-pdf"></i>
                             Subir PDF
                         </label>
+                    </div>
+                </div>
+            </div>
+
+            {/* Panel de Estadísticas */}
+            <div className="stats-panel">
+                <div className="stat-card">
+                    <i className="fas fa-file-pdf"></i>
+                    <div className="stat-info">
+                        <h3>PDFs Totales</h3>
+                        <p>{stats?.totalPdfs || 0}</p>
+                    </div>
+                </div>
+                <div className="stat-card">
+                    <i className="fas fa-database"></i>
+                    <div className="stat-info">
+                        <h3>Espacio Usado</h3>
+                        <p>{stats ? formatBytes(stats.totalSize) : '0 B'}</p>
                     </div>
                 </div>
             </div>

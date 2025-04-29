@@ -47,7 +47,7 @@ const Sidebar = ({ onNavigate, currentView }) => {
           <span>Cerrar Sesión</span>
         </button>
         <span className="version-info">
-          <i className="fas fa-info-circle"></i> v1.0.0
+          <i className="fas fa-info-circle"></i> v1.2.0
         </span>
       </div>
     </div>

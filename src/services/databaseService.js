@@ -194,5 +194,39 @@ export const databaseService = {
             console.error('Error en deletePDF:', error);
             return { error: error.message };
         }
+    },
+
+    getStats: async (userId) => {
+        try {
+            // Obtener conteo y último PDF actualizado
+            const { data: pdfs, error: pdfError } = await supabase
+                .from('pdfs')
+                .select(`
+                    id, 
+                    file_size,
+                    title,
+                    updated_at,
+                    libraries(name)
+                `)
+                .eq('user_id', userId)
+                .order('updated_at', { ascending: false });
+
+            if (pdfError) throw pdfError;
+
+            const stats = {
+                totalPdfs: pdfs.length,
+                totalSize: pdfs.reduce((acc, pdf) => acc + (pdf.file_size || 0), 0),
+                lastUpdated: pdfs[0] ? {
+                    title: pdfs[0].title,
+                    library: pdfs[0].libraries?.name,
+                    date: new Date(pdfs[0].updated_at).toLocaleDateString()
+                } : null
+            };
+
+            return { data: stats, error: null };
+        } catch (error) {
+            console.error('Error en getStats:', error);
+            return { data: null, error };
+        }
     }
 };
