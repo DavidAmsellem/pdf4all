@@ -9,6 +9,7 @@
   display: flex;
   flex-direction: column;
   box-shadow: var(--shadow-md);
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
 }
 
 .sidebar-header {
@@ -97,4 +98,56 @@
   align-items: center;
   justify-content: center;
   gap: var(--spacing-xs);
+}
+
+.theme-toggle {
+    margin-bottom: 1rem;
+}
+
+.btn-theme {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 0.75rem;
+    background: var(--background-color);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+}
+
+[data-theme='dark'] .btn-theme {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+.btn-theme:hover {
+    background: var(--primary-color);
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme='dark'] .btn-theme:hover {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+}
+
+.btn-theme i {
+    font-size: 1.1rem;
+    transition: transform 0.3s ease;
+}
+
+.btn-theme:hover i {
+    transform: rotate(360deg);
+}
+
+/* Añadir transición suave al cambiar tema */
+.sidebar, .btn-theme {
+    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
 }

@@ -228,5 +228,28 @@ export const databaseService = {
             console.error('Error en getStats:', error);
             return { data: null, error };
         }
+    },
+
+    getAllPDFs: async (userId) => {
+        try {
+            const { data, error } = await supabase
+                .from('pdfs')
+                .select(`
+                    *,
+                    libraries (
+                        id,
+                        name
+                    )
+                `)
+                .eq('user_id', userId)
+                .order('created_at', { ascending: false });
+
+            if (error) throw error;
+            
+            return { data, error: null };
+        } catch (error) {
+            console.error('Error en getAllPDFs:', error);
+            return { data: null, error };
+        }
     }
 };

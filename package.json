@@ -12,10 +12,10 @@
     "@react-pdf/renderer": "^3.4.5",
     "@supabase/supabase-js": "^2.49.4",
     "electron": "^28.0.0",
-    "pdfjs-dist": "^5.2.133",
+    "pdfjs-dist": "^3.4.120",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-pdf": "^9.2.1",
+    "react-pdf": "^6.2.2",
     "react-toastify": "^11.0.5",
     "vanilla-tilt": "^1.8.1"
   },

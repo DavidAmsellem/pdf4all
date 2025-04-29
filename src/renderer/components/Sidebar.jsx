@@ -1,15 +1,15 @@
 import React from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
 import '../styles/Sidebar.css';
 
 const Sidebar = ({ onNavigate, currentView }) => {
   const { signOut } = useAuth();
+  const { darkMode, toggleTheme } = useTheme();
 
   const handleLogout = async () => {
     try {
       await signOut();
-      // No necesitamos hacer nada más aquí, el AuthContext 
-      // se encargará de redirigir a la pantalla de login
     } catch (error) {
       console.error('Error al cerrar sesión:', error);
     }
@@ -17,7 +17,7 @@ const Sidebar = ({ onNavigate, currentView }) => {
 
   const menuItems = [
     { id: 'home', icon: 'home', label: 'Inicio' },
-    { id: 'upload', icon: 'upload', label: 'Subir PDF' },
+    { id: 'gallery', icon: 'images', label: 'Galería PDF' },
     { id: 'library', icon: 'folder', label: 'Mis PDFs' },
     { id: 'settings', icon: 'cog', label: 'Ajustes' }
   ];
@@ -42,6 +42,12 @@ const Sidebar = ({ onNavigate, currentView }) => {
         </ul>
       </nav>
       <div className="sidebar-footer">
+        <div className="theme-toggle">
+          <button onClick={toggleTheme} className="btn-theme">
+            <i className={`fas fa-${darkMode ? 'sun' : 'moon'}`}></i>
+            <span>{darkMode ? 'Modo Claro' : 'Modo Oscuro'}</span>
+          </button>
+        </div>
         <button className="btn-logout" onClick={handleLogout}>
           <i className="fas fa-sign-out-alt"></i>
           <span>Cerrar Sesión</span>

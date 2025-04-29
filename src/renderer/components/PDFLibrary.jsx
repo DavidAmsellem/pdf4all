@@ -4,6 +4,7 @@ import { databaseService } from '../../services/databaseService';
 import { toast } from 'react-toastify';
 import './PDFLibrary.css'; // Asegúrate de que esta línea existe
 import { supabase } from '../../supabase/client';  // Añadir esta importación al inicio
+import PDFGallery from './PDFGallery';
 
 const PDFLibrary = () => {
     const { user } = useAuth();
@@ -293,6 +294,14 @@ const PDFLibrary = () => {
         }
     }, [user]);
 
+    const handlePdfSelect = (pdf) => {
+        if (pdf.public_url) {
+            window.open(pdf.public_url, '_blank');
+        } else {
+            toast.error('URL del PDF no disponible');
+        }
+    };
+
     return (
         <div className="pdf-library-container">
             <div className="library-header">
@@ -539,6 +548,20 @@ const PDFLibrary = () => {
                     </div>
                 </div>
             )}
+
+            <div className="library-content">
+                {selectedLibrary ? (
+                    <PDFGallery 
+                        pdfs={libraryPdfs[selectedLibrary] || []}
+                        onPdfSelect={handlePdfSelect}
+                    />
+                ) : (
+                    <div className="select-library-message">
+                        <i className="fas fa-folder-open"></i>
+                        <p>Selecciona una biblioteca para ver sus PDFs</p>
+                    </div>
+                )}
+            </div>
         </div>
     );
 };

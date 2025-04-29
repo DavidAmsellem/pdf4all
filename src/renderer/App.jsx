@@ -1,20 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabase/client';
-import { useAuth } from '../context/AuthContext';
+import { useAuth, AuthProvider } from '../context/AuthContext';
+import { ThemeProvider } from '../context/ThemeContext';
 import './styles/App.css';
 import Sidebar from './components/Sidebar';
 import TitleBar from './components/TitleBar';
 import Home from './components/Home';
-import UploadPDF from './components/UploadPDF';
 import PDFLibrary from './components/PDFLibrary';
 import Settings from './components/Settings';
 import Auth from './components/Auth';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import AllPDFsGallery from './components/AllPDFsGallery';
 
 function App() {
     const [currentView, setCurrentView] = useState('home');
     const { user } = useAuth();
+    const [darkMode, setDarkMode] = useState(false);
 
     // Cuando user sea null (después del logout), 
     // automáticamente se mostrará el componente Auth
@@ -26,8 +28,8 @@ function App() {
         switch(currentView) {
             case 'home':
                 return <Home />;
-            case 'upload':
-                return <UploadPDF />;
+            case 'gallery':
+                return <AllPDFsGallery />;
             case 'library':
                 return <PDFLibrary />;
             case 'settings':
@@ -38,32 +40,36 @@ function App() {
     };
 
     return (
-        <div className="app-container">
-            <TitleBar />
-            <div className="app-content">
-                <Sidebar 
-                    onNavigate={setCurrentView} 
-                    currentView={currentView}
-                    user={user}
-                />
-                <main className="main-content">
-                    <div className="content-wrapper">
-                        {renderContent()}
+        <AuthProvider>
+            <ThemeProvider>
+                <div className="app" data-theme={darkMode ? 'dark' : 'light'}>
+                    <TitleBar />
+                    <div className="app-content">
+                        <Sidebar 
+                            onNavigate={setCurrentView} 
+                            currentView={currentView}
+                            user={user}
+                        />
+                        <main className="main-content">
+                            <div className="content-wrapper">
+                                {renderContent()}
+                            </div>
+                        </main>
                     </div>
-                </main>
-            </div>
-            <ToastContainer 
-                position="bottom-right"
-                autoClose={3000}
-                hideProgressBar={false}
-                newestOnTop
-                closeOnClick
-                rtl={false}
-                pauseOnFocusLoss
-                draggable
-                pauseOnHover
-            />
-        </div>
+                    <ToastContainer 
+                        position="bottom-right"
+                        autoClose={3000}
+                        hideProgressBar={false}
+                        newestOnTop
+                        closeOnClick
+                        rtl={false}
+                        pauseOnFocusLoss
+                        draggable
+                        pauseOnHover
+                    />
+                </div>
+            </ThemeProvider>
+        </AuthProvider>
     );
 }
 
