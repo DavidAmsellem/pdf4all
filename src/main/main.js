@@ -5,8 +5,9 @@ const { getPDFDirectory } = require('./fileSystem');
 
 function createWindow() {
     const win = new BrowserWindow({
-        width: 800,
-        height: 600,
+        width: 1200,
+        height: 800,
+        frame: false,
         webPreferences: {
             nodeIntegration: false,
             contextIsolation: true,
@@ -166,4 +167,24 @@ ipcMain.handle('rename-pdf', async (event, oldName, newName) => {
 
 ipcMain.handle('close-app', () => {
   app.quit();
+});
+
+// Añadir manejadores para las acciones de la ventana
+ipcMain.handle('minimize-window', () => {
+    const win = BrowserWindow.getFocusedWindow();
+    win?.minimize();
+});
+
+ipcMain.handle('maximize-window', () => {
+    const win = BrowserWindow.getFocusedWindow();
+    if (win?.isMaximized()) {
+        win.restore();
+    } else {
+        win?.maximize();
+    }
+});
+
+ipcMain.handle('close-window', () => {
+    const win = BrowserWindow.getFocusedWindow();
+    win?.close();
 });
