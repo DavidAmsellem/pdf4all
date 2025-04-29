@@ -1,18 +1,51 @@
 import React from 'react';
+import '../styles/Sidebar.css';
 
-const Sidebar = ({ pdfFiles, onSelectFile }) => {
-    return (
-        <div className="sidebar">
-            <h2>Biblioteca de PDF</h2>
-            <ul>
-                {pdfFiles.map((file, index) => (
-                    <li key={index} onClick={() => onSelectFile(file)}>
-                        {file.name}
-                    </li>
-                ))}
-            </ul>
-        </div>
-    );
+const Sidebar = ({ onNavigate, currentView }) => {
+  const menuItems = [
+    { id: 'home', icon: 'home', label: 'Inicio' },
+    { id: 'upload', icon: 'upload', label: 'Subir PDF' },
+    { id: 'library', icon: 'folder', label: 'Mis PDFs' },
+    { id: 'settings', icon: 'cog', label: 'Ajustes' }
+  ];
+
+  const handleLogout = () => {
+    if (window.confirm('¿Estás seguro de que quieres cerrar la sesión?')) {
+      // Aquí puedes añadir la lógica de cierre de sesión
+      window.electron.closeApp();
+    }
+  };
+
+  return (
+    <div className="sidebar animate-slide-in">
+      <div className="sidebar-header">
+        <h2><i className="fas fa-book"></i> PDF Biblioteca</h2>
+      </div>
+      <nav className="sidebar-nav">
+        <ul>
+          {menuItems.map(item => (
+            <li 
+              key={item.id}
+              className={currentView === item.id ? 'active' : ''}
+              onClick={() => onNavigate(item.id)}
+            >
+              <i className={`fas fa-${item.icon}`}></i>
+              <span>{item.label}</span>
+            </li>
+          ))}
+        </ul>
+      </nav>
+      <div className="sidebar-footer">
+        <button className="btn-logout" onClick={handleLogout}>
+          <i className="fas fa-sign-out-alt"></i>
+          <span>Cerrar Sesión</span>
+        </button>
+        <span className="version-info">
+          <i className="fas fa-info-circle"></i> v1.0.0
+        </span>
+      </div>
+    </div>
+  );
 };
 
 export default Sidebar;

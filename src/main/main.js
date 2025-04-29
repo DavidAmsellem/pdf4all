@@ -135,3 +135,35 @@ ipcMain.handle('delete-pdf', async (event, fileName) => {
     return { success: false, error: error.message };
   }
 });
+
+ipcMain.handle('rename-pdf', async (event, oldName, newName) => {
+  try {
+    const pdfDirectory = getPDFDirectory();
+    const oldPath = path.join(pdfDirectory, oldName);
+    const newPath = path.join(pdfDirectory, newName);
+
+    // Renombrar el archivo
+    await fs.promises.rename(oldPath, newPath);
+
+    // Actualizar metadata
+    const metadataPath = path.join(pdfDirectory, 'metadata.json');
+    if (fs.existsSync(metadataPath)) {
+      const metadata = JSON.parse(await fs.promises.readFile(metadataPath, 'utf8'));
+      const updatedMetadata = metadata.map(pdf => 
+        pdf.name === oldName 
+          ? { ...pdf, name: newName }
+          : pdf
+      );
+      await fs.promises.writeFile(metadataPath, JSON.stringify(updatedMetadata, null, 2));
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error('Error al renombrar PDF:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('close-app', () => {
+  app.quit();
+});

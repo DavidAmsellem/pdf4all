@@ -1,25 +1,42 @@
+@import './variables.css';
+
 .upload-container {
-  padding: 20px;
-  margin: 20px;
-  background: #fff;
-  border-radius: 8px;
+  background: var(--surface-color);
+  border-radius: var(--border-radius-lg);
   box-shadow: var(--shadow-md);
+  padding: var(--spacing-lg);
+  margin: var(--spacing-lg) 0;
 }
 
 .upload-area {
-  position: relative;
-  padding: 40px;
   border: 2px dashed var(--primary-color);
-  border-radius: var(--border-radius);
-  background: #f8f9fa;
-  text-align: center;
-  transition: all 0.3s ease;
+  border-radius: var(--border-radius-md);
+  padding: var(--spacing-xl);
+  background: var(--background-color);
+  transition: all var(--transition-normal);
   cursor: pointer;
+  position: relative;
+  min-height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .upload-area.drag-active {
-  background: #e3f2fd;
-  border-color: var(--secondary-color);
+  border-color: var(--primary-dark);
+  background: var(--primary-light);
+  transform: scale(1.02);
+}
+
+.upload-message {
+  text-align: center;
+  color: var(--text-secondary);
+}
+
+.upload-message i {
+  font-size: 3rem;
+  color: var(--primary-color);
+  margin-bottom: var(--spacing-md);
 }
 
 .file-input {
@@ -32,26 +49,14 @@
   cursor: pointer;
 }
 
-.upload-message {
-  color: var(--text-secondary);
-}
-
-.upload-message i {
-  font-size: 48px;
-  color: var(--primary-color);
-  margin-bottom: 15px;
-}
-
 .files-list {
-  margin-top: 20px;
-  padding: 20px;
-  background: #f8f9fa;
-  border-radius: var(--border-radius);
+  margin-top: var(--spacing-xl);
 }
 
 .files-list h3 {
-  margin: 0 0 15px 0;
   color: var(--text-primary);
+  margin-bottom: var(--spacing-md);
+  font-weight: 500;
 }
 
 .files-list ul {
@@ -61,14 +66,94 @@
 }
 
 .files-list li {
-  padding: 10px;
-  border-bottom: 1px solid #eee;
+  padding: var(--spacing-md);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  margin-bottom: var(--spacing-sm);
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  background: var(--surface-color);
+  transition: transform var(--transition-fast);
+}
+
+.files-list li:hover {
+  transform: translateX(5px);
+}
+
+.file-name {
+  flex: 1;
+  color: var(--text-primary);
 }
 
 .file-size {
   color: var(--text-secondary);
-  font-size: 0.9em;
+  margin: 0 var(--spacing-md);
+}
+
+.rename-container {
+  display: flex;
+  gap: var(--spacing-sm);
+  width: 100%;
+}
+
+.rename-input {
+  flex: 1;
+  padding: var(--spacing-sm);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  font-size: 0.9rem;
+}
+
+.btn-rename,
+.btn-save,
+.btn-cancel {
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: none;
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  font-weight: 500;
+  transition: all var(--transition-fast);
+}
+
+.btn-rename {
+  background: var(--primary-color);
+  color: white;
+}
+
+.btn-rename:hover {
+  background: var(--primary-dark);
+}
+
+.btn-save {
+  background: #4caf50;
+  color: white;
+}
+
+.btn-save:hover {
+  background: #388e3c;
+}
+
+.btn-cancel {
+  background: #f44336;
+  color: white;
+}
+
+.btn-cancel:hover {
+  background: #d32f2f;
+}
+
+.file-size-warning {
+  display: block;
+  margin-top: var(--spacing-sm);
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+}
+
+.error-message {
+  color: #dc3545;
+  margin-top: 10px;
+  padding: 10px;
+  background-color: #f8d7da;
+  border-radius: 4px;
+  font-size: 0.9rem;
 }
