@@ -9,9 +9,12 @@
     "dev": "concurrently \"vite --host\" \"wait-on tcp:3000 && npm run electron\""
   },
   "dependencies": {
+    "@react-pdf/renderer": "^3.4.5",
     "electron": "^28.0.0",
+    "pdfjs-dist": "^5.2.133",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "react-pdf": "^9.2.1"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.4.1",

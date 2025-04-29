@@ -188,3 +188,27 @@ ipcMain.handle('close-window', () => {
     const win = BrowserWindow.getFocusedWindow();
     win?.close();
 });
+
+ipcMain.handle('get-pdf-url', async (event, fileName) => {
+    try {
+        const pdfDirectory = getPDFDirectory();
+        const pdfPath = path.join(pdfDirectory, fileName);
+        
+        // Verificar que el archivo existe
+        if (!fs.existsSync(pdfPath)) {
+            throw new Error('El archivo PDF no existe');
+        }
+
+        // Leer el archivo como buffer
+        const buffer = await fs.promises.readFile(pdfPath);
+        
+        // Convertir el buffer a base64
+        const base64 = buffer.toString('base64');
+        
+        // Crear data URL
+        return `data:application/pdf;base64,${base64}`;
+    } catch (error) {
+        console.error('Error al obtener PDF:', error);
+        throw error;
+    }
+});
