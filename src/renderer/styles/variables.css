@@ -1,0 +1,23 @@
+:root {
+  /* Colores principales */
+  --primary-color: #2196f3;
+  --secondary-color: #1976d2;
+  --accent-color: #ff4081;
+  
+  /* Colores de texto */
+  --text-primary: #333333;
+  --text-secondary: #666666;
+  
+  /* Espaciado */
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 2rem;
+  
+  /* Sombras */
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.12);
+  --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
+  
+  /* Bordes */
+  --border-radius: 8px;
+}

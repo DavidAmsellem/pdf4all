@@ -1,3 +1,9 @@
+@import './variables.css';
+@import './App.css';
+@import './UploadPDF.css';
+
+/* Otros imports de CSS que puedas necesitar en el futuro */
+
 /* Este archivo contiene los estilos CSS globales para la aplicación. */ 
 
 body {
