@@ -11,7 +11,7 @@ import Settings from './components/Settings';
 import Auth from './components/Auth';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import AllPDFsGallery from './components/AllPDFsGallery';
+
 
 function App() {
     const [currentView, setCurrentView] = useState('home');
@@ -28,8 +28,6 @@ function App() {
         switch(currentView) {
             case 'home':
                 return <Home />;
-            case 'gallery':
-                return <AllPDFsGallery />;
             case 'library':
                 return <PDFLibrary />;
             case 'settings':

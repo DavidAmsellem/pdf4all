@@ -17,7 +17,6 @@ const Sidebar = ({ onNavigate, currentView }) => {
 
   const menuItems = [
     { id: 'home', icon: 'home', label: 'Inicio' },
-    { id: 'gallery', icon: 'images', label: 'Galería PDF' },
     { id: 'library', icon: 'folder', label: 'Mis PDFs' },
     { id: 'settings', icon: 'cog', label: 'Ajustes' }
   ];
