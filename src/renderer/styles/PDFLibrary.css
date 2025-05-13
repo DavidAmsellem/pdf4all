@@ -140,6 +140,7 @@
   scroll-behavior: smooth;
   scrollbar-width: thin;
   scrollbar-color: var(--primary-color) var(--bg-secondary);
+  padding-top: calc(32px + 2rem); /* 32px de la barra de título + 2rem de padding */
 }
 
 .pdf-library-container::-webkit-scrollbar {
@@ -302,6 +303,68 @@
 .library-card:hover {
   transform: translateY(-5px) scale(1.02);
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+}
+
+.library-cover {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--background-alt);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.library-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.library-cover i {
+  font-size: 1.8rem;
+  color: var(--text-secondary);
+}
+
+.upload-image-button {
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0;
+  transform: translateY(5px);
+  transition: all 0.2s ease;
+}
+
+.library-cover:hover .upload-image-button {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.upload-image-button i {
+  font-size: 0.9rem;
+  color: white;
+}
+
+.upload-image-button:hover {
+  background: var(--primary-color);
+  transform: scale(1.1);
+}
+
+.image-loading {
+  opacity: 0.5;
+  transition: opacity 0.3s ease;
 }
 
 .library-cover {
@@ -923,6 +986,51 @@
 /* Añadir animación de entrada */
 .stats-panel {
   animation: slideDown 0.5s ease-out forwards;
+}
+
+/* Estilos para la barra de título personalizada */
+.titlebar {
+    -webkit-app-region: drag; /* Permite arrastrar la ventana */
+    height: 32px;
+    background: var(--bg-primary);
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 0 1rem;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+}
+
+.titlebar-buttons {
+    -webkit-app-region: no-drag; /* Permite hacer clic en los botones */
+    display: flex;
+    gap: 0.5rem;
+}
+
+.titlebar-button {
+    width: 30px;
+    height: 30px;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.titlebar-button:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-primary);
+}
+
+.titlebar-button.close:hover {
+    background: #e81123;
+    color: white;
 }
 
 /* Animaciones */

@@ -343,306 +343,330 @@ const PDFLibrary = () => {
     };
 
     return (
-        <div className="pdf-library-container">
-            <div className="library-header">
-                <h1>Mis Bibliotecas</h1>
-                <div className="header-buttons">
+        <>
+            <div className="titlebar">
+                <div className="titlebar-buttons">
                     <button 
-                        className="create-library-button"
-                        onClick={() => setShowForm(true)}
+                        className="titlebar-button" 
+                        onClick={() => window.electron.minimizeWindow()}
                     >
-                        <i className="fas fa-plus"></i>
-                        Nueva Biblioteca
+                        <i className="fas fa-window-minimize"></i>
                     </button>
-                    <div className="pdf-upload-button">
-                        <input
-                            type="file"
-                            id="pdf-upload"
-                            accept=".pdf"
-                            onChange={handlePdfUpload}
-                            style={{ display: 'none' }}
-                        />
-                        <label htmlFor="pdf-upload" className="upload-button">
-                            <i className="fas fa-file-pdf"></i>
-                            Subir PDF
-                        </label>
-                    </div>
+                    <button 
+                        className="titlebar-button"
+                        onClick={() => window.electron.maximizeWindow()}
+                    >
+                        <i className="fas fa-window-maximize"></i>
+                    </button>
+                    <button 
+                        className="titlebar-button close"
+                        onClick={() => window.electron.closeWindow()}
+                    >
+                        <i className="fas fa-times"></i>
+                    </button>
                 </div>
             </div>
-
-            {/* Panel de Estadísticas */}
-            <div className="stats-panel">
-                <div className="stat-card">
-                    <i className="fas fa-file-pdf"></i>
-                    <div className="stat-info">
-                        <h3>PDFs Totales</h3>
-                        <p>{stats?.totalPdfs || 0}</p>
-                    </div>
-                </div>
-                <div className="stat-card">
-                    <i className="fas fa-database"></i>
-                    <div className="stat-info">
-                        <h3>Espacio Usado</h3>
-                        <p>{stats ? formatBytes(stats.totalSize) : '0 B'}</p>
-                    </div>
-                </div>
-            </div>
-
-            {showForm && (
-                <div className="modal-overlay">
-                    <div className="modal-content">
+            <div className="pdf-library-container">
+                <div className="library-header">
+                    <h1>Mis Bibliotecas</h1>
+                    <div className="header-buttons">
                         <button 
-                            className="close-button"
-                            onClick={() => setShowForm(false)}
+                            className="create-library-button"
+                            onClick={() => setShowForm(true)}
                         >
-                            <i className="fas fa-times"></i>
+                            <i className="fas fa-plus"></i>
+                            Nueva Biblioteca
                         </button>
-                        
-                        <form onSubmit={handleCreateLibrary} className="library-form">
-                            <h2>Crear Nueva Biblioteca</h2>
-                            
-                            {error && (
-                                <div className="form-error">
-                                    {error}
-                                </div>
-                            )}
-
-                            <div className="form-group">
-                                <label htmlFor="name">Nombre*</label>
-                                <input
-                                    type="text"
-                                    id="name"
-                                    name="name"
-                                    value={formData.name}
-                                    onChange={handleChange}
-                                    required
-                                    disabled={loading}
-                                />
-                            </div>
-
-                            <div className="form-group">
-                                <label htmlFor="description">Descripción</label>
-                                <textarea
-                                    id="description"
-                                    name="description"
-                                    value={formData.description}
-                                    onChange={handleChange}
-                                    rows="4"
-                                    disabled={loading}
-                                />
-                            </div>
-
-                            <button 
-                                type="submit" 
-                                className="submit-button"
-                                disabled={loading}
-                            >
-                                {loading ? 'Creando...' : 'Crear Biblioteca'}
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            )}
-
-            {isLoading ? (
-                <div className="loading-state">
-                    <i className="fas fa-spinner fa-spin"></i>
-                    <p>Cargando bibliotecas...</p>
-                </div>
-            ) : (
-                <div className="libraries-grid">
-                    {libraries.length === 0 ? (
-                        <div className="empty-state">
-                            <i className="fas fa-book"></i>
-                            <p>No tienes bibliotecas creadas</p>
-                            <button 
-                                className="create-first-library"
-                                onClick={() => setShowForm(true)}
-                            >
-                                Crear mi primera biblioteca
-                            </button>
+                        <div className="pdf-upload-button">
+                            <input
+                                type="file"
+                                id="pdf-upload"
+                                accept=".pdf"
+                                onChange={handlePdfUpload}
+                                style={{ display: 'none' }}
+                            />
+                            <label htmlFor="pdf-upload" className="upload-button">
+                                <i className="fas fa-file-pdf"></i>
+                                Subir PDF
+                            </label>
                         </div>
-                    ) : (
-                        libraries.map(library => (
-                            <div key={library.id} className="library-card animate-scale-in">
-                                <div 
-                                    className="library-header-card"
-                                    onClick={() => toggleLibrary(library.id)}
-                                >
-                                    <div className="library-cover">
-                                        {library.cover_image ? (
-                                            <img 
-                                                src={library.cover_image} 
-                                                alt={library.name}
-                                                className={uploadingImage === library.id ? 'image-loading' : ''}
-                                            />
-                                        ) : (
-                                            <i className="fas fa-book-open"></i>
-                                        )}
-                                        <input
-                                            type="file"
-                                            id={`cover-upload-${library.id}`}
-                                            accept="image/*"
-                                            onChange={(e) => handleImageUpload(e, library.id)}
-                                            style={{ display: 'none' }}
-                                        />
-                                        <label 
-                                            htmlFor={`cover-upload-${library.id}`}
-                                            className="upload-image-button"
-                                            onClick={(e) => e.stopPropagation()}
-                                            title="Cambiar imagen de portada"
-                                        >
-                                            <i className="fas fa-camera"></i>
-                                        </label>
-                                    </div>
-                                    <div className="library-info">
-                                        <h3>{library.name}</h3>
-                                        <p>{library.description || 'Sin descripción'}</p>
-                                        <div className="library-stats">
-                                            <small>PDFs: {library.pdf_count || 0}</small>
-                                            <small>Creada: {new Date(library.created_at).toLocaleDateString()}</small>
-                                        </div>
-                                    </div>
-                                    <div className="library-expand-icon">
-                                        <i className={`fas fa-chevron-${expandedLibrary === library.id ? 'up' : 'down'}`}></i>
-                                    </div>
-                                </div>
-
-                                <div className={`library-content ${expandedLibrary === library.id ? 'expanded' : ''}`}>
-                                    <div className="pdf-list">
-                                        <h4>PDFs en esta biblioteca:</h4>
-                                        {libraryPdfs[library.id]?.length > 0 ? (
-                                            <div className="pdf-grid">
-                                                {libraryPdfs[library.id].map(pdf => (
-                                                    <div key={pdf.id} className="pdf-card">
-                                                        <div className="pdf-cover">
-                                                            {pdf.cover_url ? (
-                                                                <img 
-                                                                    src={pdf.cover_url} 
-                                                                    alt={pdf.title}
-                                                                    className="pdf-thumbnail"
-                                                                    onError={(e) => {
-                                                                        e.target.onerror = null;
-                                                                        e.target.src = '/placeholder.png';
-                                                                    }}
-                                                                />
-                                                            ) : (
-                                                                <div className="pdf-thumbnail-placeholder">
-                                                                    <i className="fas fa-file-pdf"></i>
-                                                                </div>
-                                                            )}
-                                                            <div className="pdf-actions">
-                                                                <button 
-                                                                    className="btn-action"
-                                                                    onClick={() => handleOpenPdf(pdf)}
-                                                                    title="Abrir PDF"
-                                                                >
-                                                                    <i className="fas fa-external-link-alt"></i>
-                                                                </button>
-                                                                <button 
-                                                                    className="btn-action delete"
-                                                                    onClick={() => handleDeletePdf(pdf.id, library.id)}
-                                                                    title="Eliminar PDF"
-                                                                >
-                                                                    <i className="fas fa-trash-alt"></i>
-                                                                </button>
-                                                            </div>
-                                                        </div>
-                                                        <div className="pdf-info">
-                                                            <h5 className="pdf-title">{pdf.title}</h5>
-                                                            <div className="pdf-meta">
-                                                                <span>
-                                                                    <i className="fas fa-hdd"></i>
-                                                                    {formatBytes(pdf.file_size)}
-                                                                </span>
-                                                                <span>
-                                                                    <i className="fas fa-calendar-alt"></i>
-                                                                    {new Date(pdf.created_at).toLocaleDateString()}
-                                                                </span>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        ) : (
-                                            <p className="no-pdfs">No hay PDFs en esta biblioteca</p>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-                        ))
-                    )}
-                </div>
-            )}
-
-            {/* Modal de selección de biblioteca */}
-            {showPdfModal && (
-                <div className="modal-overlay">
-                    <div className="modal-content">
-                        <button 
-                            className="close-button"
-                            onClick={() => {
-                                setShowPdfModal(false);
-                                setSelectedFile(null);
-                                setSelectedLibrary('');
-                            }}
-                        >
-                            <i className="fas fa-times"></i>
-                        </button>
-                        
-                        <form onSubmit={handleAssignPdf} className="library-form">
-                            <h2>Asignar PDF a Biblioteca</h2>
-                            
-                            <div className="form-group">
-                                <p className="selected-file">
-                                    Archivo seleccionado: {selectedFile?.name}
-                                </p>
-                            </div>
-
-                            <div className="form-group">
-                                <label htmlFor="library">Seleccionar Biblioteca*</label>
-                                <select
-                                    id="library"
-                                    value={selectedLibrary}
-                                    onChange={(e) => setSelectedLibrary(e.target.value)}
-                                    required
-                                    disabled={loading}
-                                >
-                                    <option value="">Selecciona una biblioteca</option>
-                                    {libraries.map(library => (
-                                        <option key={library.id} value={library.id}>
-                                            {library.name}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            <button 
-                                type="submit" 
-                                className="submit-button"
-                                disabled={loading || !selectedLibrary}
-                            >
-                                {loading ? 'Asignando...' : 'Asignar PDF'}
-                            </button>
-                        </form>
                     </div>
                 </div>
-            )}
 
-            <div className="library-content">
-                {selectedLibrary ? (
-                    <PDFGallery 
-                        pdfs={libraryPdfs[selectedLibrary] || []}
-                        onPdfSelect={handlePdfSelect}
-                    />
-                ) : (
-                    <div className="select-library-message">
-                        <i className="fas fa-folder-open"></i>
-                        <p>Selecciona una biblioteca para ver sus PDFs</p>
+                {/* Panel de Estadísticas */}
+                <div className="stats-panel">
+                    <div className="stat-card">
+                        <i className="fas fa-file-pdf"></i>
+                        <div className="stat-info">
+                            <h3>PDFs Totales</h3>
+                            <p>{stats?.totalPdfs || 0}</p>
+                        </div>
+                    </div>
+                    <div className="stat-card">
+                        <i className="fas fa-database"></i>
+                        <div className="stat-info">
+                            <h3>Espacio Usado</h3>
+                            <p>{stats ? formatBytes(stats.totalSize) : '0 B'}</p>
+                        </div>
+                    </div>
+                </div>
+
+                {showForm && (
+                    <div className="modal-overlay">
+                        <div className="modal-content">
+                            <button 
+                                className="close-button"
+                                onClick={() => setShowForm(false)}
+                            >
+                                <i className="fas fa-times"></i>
+                            </button>
+                            
+                            <form onSubmit={handleCreateLibrary} className="library-form">
+                                <h2>Crear Nueva Biblioteca</h2>
+                                
+                                {error && (
+                                    <div className="form-error">
+                                        {error}
+                                    </div>
+                                )}
+
+                                <div className="form-group">
+                                    <label htmlFor="name">Nombre*</label>
+                                    <input
+                                        type="text"
+                                        id="name"
+                                        name="name"
+                                        value={formData.name}
+                                        onChange={handleChange}
+                                        required
+                                        disabled={loading}
+                                    />
+                                </div>
+
+                                <div className="form-group">
+                                    <label htmlFor="description">Descripción</label>
+                                    <textarea
+                                        id="description"
+                                        name="description"
+                                        value={formData.description}
+                                        onChange={handleChange}
+                                        rows="4"
+                                        disabled={loading}
+                                    />
+                                </div>
+
+                                <button 
+                                    type="submit" 
+                                    className="submit-button"
+                                    disabled={loading}
+                                >
+                                    {loading ? 'Creando...' : 'Crear Biblioteca'}
+                                </button>
+                            </form>
+                        </div>
                     </div>
                 )}
+
+                {isLoading ? (
+                    <div className="loading-state">
+                        <i className="fas fa-spinner fa-spin"></i>
+                        <p>Cargando bibliotecas...</p>
+                    </div>
+                ) : (
+                    <div className="libraries-grid">
+                        {libraries.length === 0 ? (
+                            <div className="empty-state">
+                                <i className="fas fa-book"></i>
+                                <p>No tienes bibliotecas creadas</p>
+                                <button 
+                                    className="create-first-library"
+                                    onClick={() => setShowForm(true)}
+                                >
+                                    Crear mi primera biblioteca
+                                </button>
+                            </div>
+                        ) : (
+                            libraries.map(library => (
+                                <div key={library.id} className="library-card animate-scale-in">
+                                    <div 
+                                        className="library-header-card"
+                                        onClick={() => toggleLibrary(library.id)}
+                                    >
+                                        <div className="library-cover">
+                                            {library.cover_image ? (
+                                                <img 
+                                                    src={library.cover_image} 
+                                                    alt={library.name}
+                                                    className={uploadingImage === library.id ? 'image-loading' : ''}
+                                                />
+                                            ) : (
+                                                <i className="fas fa-book-open"></i>
+                                            )}
+                                            <input
+                                                type="file"
+                                                id={`cover-upload-${library.id}`}
+                                                accept="image/*"
+                                                onChange={(e) => handleImageUpload(e, library.id)}
+                                                style={{ display: 'none' }}
+                                            />
+                                            <label 
+                                                htmlFor={`cover-upload-${library.id}`}
+                                                className="upload-image-button"
+                                                onClick={(e) => e.stopPropagation()}
+                                                title="Cambiar imagen de portada"
+                                            >
+                                                <i className="fas fa-camera"></i>
+                                            </label>
+                                        </div>
+                                        <div className="library-info">
+                                            <h3>{library.name}</h3>
+                                            <p>{library.description || 'Sin descripción'}</p>
+                                            <div className="library-stats">
+                                                <small>PDFs: {library.pdf_count || 0}</small>
+                                                <small>Creada: {new Date(library.created_at).toLocaleDateString()}</small>
+                                            </div>
+                                        </div>
+                                        <div className="library-expand-icon">
+                                            <i className={`fas fa-chevron-${expandedLibrary === library.id ? 'up' : 'down'}`}></i>
+                                        </div>
+                                    </div>
+
+                                    <div className={`library-content ${expandedLibrary === library.id ? 'expanded' : ''}`}>
+                                        <div className="pdf-list">
+                                            <h4>PDFs en esta biblioteca:</h4>
+                                            {libraryPdfs[library.id]?.length > 0 ? (
+                                                <div className="pdf-grid">
+                                                    {libraryPdfs[library.id].map(pdf => (
+                                                        <div key={pdf.id} className="pdf-card">
+                                                            <div className="pdf-cover">
+                                                                {pdf.cover_url ? (
+                                                                    <img 
+                                                                        src={pdf.cover_url} 
+                                                                        alt={pdf.title}
+                                                                        className="pdf-thumbnail"
+                                                                        onError={(e) => {
+                                                                            e.target.onerror = null;
+                                                                            e.target.src = '/placeholder.png';
+                                                                        }}
+                                                                    />
+                                                                ) : (
+                                                                    <div className="pdf-thumbnail-placeholder">
+                                                                        <i className="fas fa-file-pdf"></i>
+                                                                    </div>
+                                                                )}
+                                                                <div className="pdf-actions">
+                                                                    <button 
+                                                                        className="btn-action"
+                                                                        onClick={() => handleOpenPdf(pdf)}
+                                                                        title="Abrir PDF"
+                                                                    >
+                                                                        <i className="fas fa-external-link-alt"></i>
+                                                                    </button>
+                                                                    <button 
+                                                                        className="btn-action delete"
+                                                                        onClick={() => handleDeletePdf(pdf.id, library.id)}
+                                                                        title="Eliminar PDF"
+                                                                    >
+                                                                        <i className="fas fa-trash-alt"></i>
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                            <div className="pdf-info">
+                                                                <h5 className="pdf-title">{pdf.title}</h5>
+                                                                <div className="pdf-meta">
+                                                                    <span>
+                                                                        <i className="fas fa-hdd"></i>
+                                                                        {formatBytes(pdf.file_size)}
+                                                                    </span>
+                                                                    <span>
+                                                                        <i className="fas fa-calendar-alt"></i>
+                                                                        {new Date(pdf.created_at).toLocaleDateString()}
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            ) : (
+                                                <p className="no-pdfs">No hay PDFs en esta biblioteca</p>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                )}
+
+                {/* Modal de selección de biblioteca */}
+                {showPdfModal && (
+                    <div className="modal-overlay">
+                        <div className="modal-content">
+                            <button 
+                                className="close-button"
+                                onClick={() => {
+                                    setShowPdfModal(false);
+                                    setSelectedFile(null);
+                                    setSelectedLibrary('');
+                                }}
+                            >
+                                <i className="fas fa-times"></i>
+                            </button>
+                            
+                            <form onSubmit={handleAssignPdf} className="library-form">
+                                <h2>Asignar PDF a Biblioteca</h2>
+                                
+                                <div className="form-group">
+                                    <p className="selected-file">
+                                        Archivo seleccionado: {selectedFile?.name}
+                                    </p>
+                                </div>
+
+                                <div className="form-group">
+                                    <label htmlFor="library">Seleccionar Biblioteca*</label>
+                                    <select
+                                        id="library"
+                                        value={selectedLibrary}
+                                        onChange={(e) => setSelectedLibrary(e.target.value)}
+                                        required
+                                        disabled={loading}
+                                    >
+                                        <option value="">Selecciona una biblioteca</option>
+                                        {libraries.map(library => (
+                                            <option key={library.id} value={library.id}>
+                                                {library.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                <button 
+                                    type="submit" 
+                                    className="submit-button"
+                                    disabled={loading || !selectedLibrary}
+                                >
+                                    {loading ? 'Asignando...' : 'Asignar PDF'}
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                )}
+
+                <div className="library-content">
+                    {selectedLibrary ? (
+                        <PDFGallery 
+                            pdfs={libraryPdfs[selectedLibrary] || []}
+                            onPdfSelect={handlePdfSelect}
+                        />
+                    ) : (
+                        <div className="select-library-message">
+                            <i className="fas fa-folder-open"></i>
+                            <p>Selecciona una biblioteca para ver sus PDFs</p>
+                        </div>
+                    )}
+                </div>
             </div>
-        </div>
+        </>
     );
 };
 
