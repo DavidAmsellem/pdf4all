@@ -1,22 +1,24 @@
 {
   "name": "pdf-biblioteca",
   "version": "1.0.0",
+  "description": "Gestor de bibliotecas PDF con cifrado",
+  "author": "David Amsellem",
   "main": "src/main/main.js",
   "scripts": {
     "start": "vite",
     "build": "vite build",
     "electron": "cross-env NODE_ENV=development electron .",
-    "dev": "concurrently \"vite --host\" \"wait-on tcp:3000 && npm run electron\""
+    "dev": "concurrently \"vite --host\" \"wait-on tcp:3000 && npm run electron\"",
+    "dist": "npm run build && electron-builder"
   },
   "dependencies": {
     "@react-pdf/renderer": "^3.4.5",
     "@supabase/supabase-js": "^2.49.4",
     "crypto-js": "^4.2.0",
-    "electron": "^28.0.0",
-    "pdfjs-dist": "^3.4.120",
+    "pdfjs-dist": "^5.2.133",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-pdf": "^6.2.2",
+    "react-pdf": "^9.2.1",
     "react-toastify": "^11.0.5",
     "vanilla-tilt": "^1.8.1"
   },
@@ -24,10 +26,32 @@
     "@vitejs/plugin-react": "^4.4.1",
     "concurrently": "^9.1.2",
     "cross-env": "^7.0.3",
+    "electron": "^28.0.0",
     "electron-builder": "^24.9.0",
     "vite": "^6.3.3",
     "wait-on": "^8.0.3"
   },
   "homepage": ".",
-  "license": "MIT"
+  "license": "MIT",
+  "build": {
+    "appId": "com.davidamsellem.pdfbiblioteca",
+    "productName": "PDF Biblioteca",
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": ["nsis", "portable"],
+      "icon": "src/assets/icon.ico",
+      "signAndEditExecutable": false
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    },
+    "portable": {
+      "artifactName": "${productName}-portable.exe"
+    }
+  }
 }
