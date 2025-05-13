@@ -5,6 +5,8 @@ import { toast } from 'react-toastify';
 import './PDFLibrary.css'; // Asegúrate de que esta línea existe
 import { supabase } from '../../supabase/client';  // Añadir esta importación al inicio
 import PDFGallery from './PDFGallery';
+import * as pdfjsLib from 'pdfjs-dist';
+pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
 
 const PDFLibrary = () => {
     const { user } = useAuth();
@@ -126,43 +128,76 @@ const PDFLibrary = () => {
     // Modificar handleAssignPdf para recargar los PDFs después de asignar uno nuevo
     const handleAssignPdf = async (e) => {
         e.preventDefault();
-        if (!selectedLibrary) {
-            toast.error('Por favor, selecciona una biblioteca');
-            return;
-        }
-
         setLoading(true);
         try {
-            if (!selectedFile) {
-                throw new Error('No se ha seleccionado ningún archivo');
+            if (!selectedFile || !selectedLibrary) {
+                throw new Error('Faltan datos requeridos');
             }
 
+            // 1. Extraer la primera página como imagen
+            const arrayBuffer = await selectedFile.arrayBuffer();
+            const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
+            const page = await pdf.getPage(1);
+            
+            // Configurar el canvas para la portada
+            const viewport = page.getViewport({ scale: 1.0 });
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            canvas.width = viewport.width;
+            canvas.height = viewport.height;
+
+            // Renderizar la página en el canvas
+            await page.render({
+                canvasContext: context,
+                viewport: viewport
+            }).promise;
+
+            // Convertir el canvas a blob
+            const coverBlob = await new Promise(resolve => {
+                canvas.toBlob(resolve, 'image/png', 0.75);
+            });
+
+            // 2. Subir la portada al bucket 'pdfs'
+            const coverFileName = `covers/${Date.now()}-${selectedFile.name.replace('.pdf', '')}.png`;
+            const { data: coverData, error: coverError } = await supabase.storage
+                .from('pdfs') // Usar el bucket 'pdfs' existente
+                .upload(coverFileName, coverBlob);
+
+            if (coverError) {
+                console.error('Error al subir la portada:', coverError);
+                throw new Error('Error al guardar la portada del PDF');
+            }
+
+            // Obtener la URL pública de la portada
+            const { data: { publicUrl: coverUrl } } = supabase.storage
+                .from('pdfs')
+                .getPublicUrl(coverFileName);
+
+            // 3. Preparar los datos del PDF
             const fileData = {
                 title: selectedFile.name.replace('.pdf', ''),
                 fileName: selectedFile.name,
                 libraryId: selectedLibrary,
                 userId: user.id,
-                fileSize: selectedFile.size || 0,
-                file: selectedFile  // Añadir el archivo aquí
+                fileSize: selectedFile.size,
+                file: selectedFile,
+                coverUrl: coverUrl,
+                coverPath: coverData.path
             };
 
-            console.log('Datos a enviar:', fileData); // Debug
-            console.log('Tamaño del archivo:', selectedFile.size); // Debug
-
+            // 4. Crear el PDF usando el servicio
             const { data, error } = await databaseService.createPDF(fileData);
             
-            if (error) {
-                throw new Error(error);
-            }
+            if (error) throw error;
 
-            // Recargar los PDFs de la biblioteca específica
+            // 5. Actualizar la UI
             await loadPDFsForLibrary(selectedLibrary);
             
-            toast.success('PDF añadido correctamente');
+            toast.success('PDF añadido correctamente con portada');
             setShowPdfModal(false);
             setSelectedFile(null);
             setSelectedLibrary('');
-            
+
         } catch (err) {
             console.error('Error al asignar PDF:', err);
             toast.error(err.message || 'Error al asignar el PDF');

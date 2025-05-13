@@ -1,4 +1,6 @@
 import { supabase } from '../supabase/client';
+import * as pdfjsLib from 'pdfjs-dist';
+pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
 
 export const databaseService = {
     // Servicios para bibliotecas
@@ -79,49 +81,47 @@ export const databaseService = {
         }
     },
 
-    createPDF: async (pdfData) => {
+    createPDF: async (fileData) => {
         try {
-            // 1. Subir archivo al storage
-            const filePath = `${pdfData.userId}/${pdfData.libraryId}/${Date.now()}-${pdfData.fileName}`;
-            
-            const { data: fileData, error: uploadError } = await supabase.storage
+            // 1. Subir el PDF
+            const pdfFileName = `pdfs/${Date.now()}-${fileData.fileName}`;
+            const { data: fileUpload, error: uploadError } = await supabase.storage
                 .from('pdfs')
-                .upload(filePath, pdfData.file, {
-                    contentType: 'application/pdf',
-                    cacheControl: '3600'
-                });
+                .upload(pdfFileName, fileData.file);
 
-            if (uploadError) {
-                console.error('Error al subir archivo:', uploadError);
-                throw new Error('Error al subir el archivo PDF');
-            }
+            if (uploadError) throw uploadError;
 
-            // 2. Obtener URL pública
+            // Obtener la URL pública del PDF
             const { data: { publicUrl } } = supabase.storage
                 .from('pdfs')
-                .getPublicUrl(filePath);
+                .getPublicUrl(fileUpload.path);
 
-            // 3. Crear registro en la base de datos
-            const { data: pdf, error: dbError } = await supabase
+            // 2. Crear el registro en la base de datos
+            const pdfData = {
+                title: fileData.title,
+                file_name: fileData.fileName,
+                library_id: fileData.libraryId,
+                user_id: fileData.userId,
+                file_size: fileData.fileSize,
+                public_url: publicUrl,
+                storage_path: fileUpload.path
+            };
+
+            // Añadir campos opcionales si existen
+            if (fileData.coverUrl) pdfData.cover_url = fileData.coverUrl;
+            if (fileData.coverPath) pdfData.cover_path = fileData.coverPath;
+
+            const { data, error } = await supabase
                 .from('pdfs')
-                .insert({
-                    title: pdfData.title,
-                    file_name: pdfData.fileName,
-                    library_id: pdfData.libraryId,
-                    user_id: pdfData.userId,
-                    file_size: pdfData.fileSize,
-                    storage_path: filePath,
-                    public_url: publicUrl
-                })
+                .insert([pdfData])
                 .select()
                 .single();
 
-            if (dbError) throw dbError;
-
-            return { data: pdf, error: null };
+            if (error) throw error;
+            return { data, error: null };
         } catch (error) {
             console.error('Error en createPDF:', error);
-            return { data: null, error: error.message };
+            return { data: null, error };
         }
     },
 
