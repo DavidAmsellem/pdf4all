@@ -2,6 +2,15 @@ import { supabase } from '../supabase/client';
 import * as pdfjsLib from 'pdfjs-dist';
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
 
+const getSignedUrl = async (path, expiresIn = 3600) => {
+    const { data, error } = await supabase.storage
+        .from('pdfs')
+        .createSignedUrl(path, expiresIn);
+
+    if (error) throw error;
+    return data.signedUrl;
+};
+
 export const databaseService = {
     // Servicios para bibliotecas
     getUserLibraries: async (userId) => {
@@ -87,26 +96,33 @@ export const databaseService = {
 
             if (uploadError) throw uploadError;
 
-            // Obtener la URL pública del PDF
-            const { data: { publicUrl } } = supabase.storage
+            // 2. Obtener URL firmada para el PDF
+            const { data: { signedUrl: pdfSignedUrl } } = await supabase.storage
                 .from('pdfs')
-                .getPublicUrl(fileUpload.path);
+                .createSignedUrl(fileUpload.path, 3600);
 
-            // 2. Crear el registro en la base de datos
+            // 3. Preparar datos del PDF para la base de datos
             const pdfData = {
                 title: fileData.title,
                 file_name: fileData.fileName,
                 library_id: fileData.libraryId,
                 user_id: fileData.userId,
                 file_size: fileData.fileSize,
-                public_url: publicUrl,
-                storage_path: fileUpload.path
+                storage_path: fileUpload.path,
+                public_url: pdfSignedUrl
             };
 
-            // Añadir campos opcionales si existen
-            if (fileData.coverUrl) pdfData.cover_url = fileData.coverUrl;
-            if (fileData.coverPath) pdfData.cover_path = fileData.coverPath;
+            // 4. Si hay datos de portada, añadirlos
+            if (fileData.coverPath) {
+                const { data: { signedUrl: coverSignedUrl } } = await supabase.storage
+                    .from('pdfs')
+                    .createSignedUrl(fileData.coverPath, 3600);
 
+                pdfData.cover_path = fileData.coverPath;
+                pdfData.cover_url = coverSignedUrl;
+            }
+
+            // 5. Crear el registro en la base de datos
             const { data, error } = await supabase
                 .from('pdfs')
                 .insert([pdfData])
@@ -114,14 +130,6 @@ export const databaseService = {
                 .single();
 
             if (error) throw error;
-
-            // Actualizar el contador de la biblioteca
-            const { error: updateError } = await supabase.rpc('increment_library_pdf_count', {
-                library_id: fileData.libraryId
-            });
-
-            if (updateError) throw updateError;
-
             return { data, error: null };
         } catch (error) {
             console.error('Error en createPDF:', error);
@@ -131,20 +139,28 @@ export const databaseService = {
 
     getPDFsByLibrary: async (libraryId) => {
         try {
-            const { data, error } = await supabase
+            const { data: pdfs, error } = await supabase
                 .from('pdfs')
-                .select(`
-                    *,
-                    libraries!inner (
-                        id,
-                        name
-                    )
-                `)
-                .eq('library_id', libraryId)
-                .order('created_at', { ascending: false });
+                .select('*')
+                .eq('library_id', libraryId);
 
             if (error) throw error;
-            return { data, error: null };
+
+            // Actualizar URLs firmadas para cada PDF
+            const pdfsWithSignedUrls = await Promise.all(pdfs.map(async (pdf) => {
+                const [fileUrl, coverUrl] = await Promise.all([
+                    getSignedUrl(pdf.storage_path),
+                    pdf.cover_path ? getSignedUrl(pdf.cover_path) : null
+                ]);
+
+                return {
+                    ...pdf,
+                    public_url: fileUrl,
+                    cover_url: coverUrl
+                };
+            }));
+
+            return { data: pdfsWithSignedUrls, error: null };
         } catch (error) {
             console.error('Error en getPDFsByLibrary:', error);
             return { data: null, error };

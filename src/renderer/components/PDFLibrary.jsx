@@ -228,15 +228,17 @@ const PDFLibrary = () => {
 
             if (uploadError) throw uploadError;
 
-            // Obtener URL pública
-            const { data: { publicUrl } } = supabase.storage
+            // Usar URL firmada
+            const { data: { signedUrl } } = await supabase.storage
                 .from('library-covers')
-                .getPublicUrl(fileName);
+                .createSignedUrl(uploadData.path, 3600);
 
-            // Actualizar biblioteca con la nueva imagen
             const { error: updateError } = await supabase
                 .from('libraries')
-                .update({ cover_image: publicUrl })
+                .update({ 
+                    cover_image: signedUrl,
+                    cover_path: uploadData.path // Guardar también la ruta
+                })
                 .eq('id', libraryId);
 
             if (updateError) throw updateError;
@@ -244,7 +246,7 @@ const PDFLibrary = () => {
             // Actualizar estado local
             setLibraries(libraries.map(lib => 
                 lib.id === libraryId 
-                    ? { ...lib, cover_image: publicUrl }
+                    ? { ...lib, cover_image: signedUrl }
                     : lib
             ));
 

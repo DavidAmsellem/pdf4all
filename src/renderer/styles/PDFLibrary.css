@@ -20,14 +20,21 @@
 
 .library-content {
   max-height: 0;
+  opacity: 0;
   overflow: hidden;
-  transition: max-height 0.3s ease-out;
+  transition: all 0.3s ease-out;
   background: var(--background-alt);
+  pointer-events: none;
+  visibility: hidden;
 }
 
 .library-content.expanded {
   max-height: 2000px; /* Altura máxima arbitraria */
-  transition: max-height 0.5s ease-in;
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  padding: 1rem;
+  border-top: 1px solid var(--border-color);
 }
 
 .library-expand-icon {
@@ -39,10 +46,23 @@
 
 .library-expand-icon i {
   font-size: 1.2rem;
+  transition: transform 0.3s ease;
 }
 
-.library-card:hover .library-expand-icon {
-  color: var(--text-primary);
+.library-header-card[aria-expanded="true"] .library-expand-icon i {
+  transform: rotate(180deg);
+}
+
+/* Eliminar o comentar estas secciones duplicadas */
+/*.library-card {
+    margin-bottom: 1rem;
+    border-radius: 12px;
+    background: var(--surface-color);
+    box-shadow: var(--shadow-sm);
+}*/
+
+.library-card:last-child {
+  margin-bottom: 0;
 }
 
 .pdf-list {
@@ -273,6 +293,17 @@
   margin: 2rem 0;
 }
 
+/* Eliminar o comentar estas secciones duplicadas */
+/*.library-content {
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    transition: all 0.3s ease-out;
+    background: var(--background-alt);
+    pointer-events: none;
+    visibility: hidden;
+}*/
+
 .library-card {
   background: rgba(255, 255, 255, 0.05);
   border-radius: 16px;
@@ -282,6 +313,7 @@
   backdrop-filter: blur(10px);
   position: relative;
   overflow: hidden;
+  margin-bottom: 1.5rem;
 }
 
 .library-card::before {
@@ -1121,4 +1153,72 @@
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+/* Estilos para las bibliotecas */
+.library-card {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 16px;
+    transition: all 0.3s ease;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+}
+
+.library-header-card {
+    display: flex;
+    align-items: center;
+    padding: 1.5rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.library-header-card:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* Contenido desplegable de la biblioteca */
+.library-content {
+    height: 0;
+    opacity: 0;
+    overflow: hidden;
+    transition: height 0.3s ease-out, opacity 0.3s ease-out;
+    background: var(--background-alt);
+    pointer-events: none;
+    visibility: hidden;
+}
+
+.library-content.expanded {
+    height: auto;
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    padding: 1.5rem;
+    border-top: 1px solid var(--border-color);
+}
+
+/* Icono de expansión */
+.library-expand-icon {
+    margin-left: auto;
+    padding: 0 1rem;
+    color: var(--text-secondary);
+    transition: transform 0.3s ease;
+}
+
+.library-expand-icon i {
+    font-size: 1.2rem;
+}
+
+.library-header-card[aria-expanded="true"] .library-expand-icon i {
+    transform: rotate(180deg);
+}
+
+/* Grid de PDFs dentro de la biblioteca */
+.pdf-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1rem;
 }
