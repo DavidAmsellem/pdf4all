@@ -6,26 +6,22 @@ export const databaseService = {
     // Servicios para bibliotecas
     getUserLibraries: async (userId) => {
         try {
-            // Primero obtenemos las bibliotecas
-            const { data: libraries, error: librariesError } = await supabase
+            // Consulta para obtener bibliotecas con conteo de PDFs
+            const { data, error } = await supabase
                 .from('libraries')
-                .select('*')
+                .select(`
+                    *,
+                    pdfs:pdfs(count)
+                `)
                 .eq('user_id', userId)
                 .order('created_at', { ascending: false });
 
-            if (librariesError) throw librariesError;
+            if (error) throw error;
 
-            // Luego obtenemos el conteo de PDFs para cada biblioteca
-            const { data: pdfCounts, error: countError } = await supabase
-                .from('library_pdf_counts')
-                .select('*');
-
-            if (countError) throw countError;
-
-            // Combinamos la información
-            const librariesWithCounts = libraries.map(library => ({
+            // Procesar los resultados para incluir el conteo
+            const librariesWithCounts = data.map(library => ({
                 ...library,
-                pdf_count: pdfCounts.find(count => count.library_id === library.id)?.pdf_count || 0
+                pdf_count: library.pdfs?.[0]?.count || 0
             }));
 
             return { data: librariesWithCounts, error: null };
@@ -118,6 +114,14 @@ export const databaseService = {
                 .single();
 
             if (error) throw error;
+
+            // Actualizar el contador de la biblioteca
+            const { error: updateError } = await supabase.rpc('increment_library_pdf_count', {
+                library_id: fileData.libraryId
+            });
+
+            if (updateError) throw updateError;
+
             return { data, error: null };
         } catch (error) {
             console.error('Error en createPDF:', error);
@@ -167,21 +171,14 @@ export const databaseService = {
     // Añadir método para eliminar PDF
     deletePDF: async (pdfId) => {
         try {
-            // 1. Obtener información del PDF
+            // Primero obtener el library_id del PDF
             const { data: pdf } = await supabase
                 .from('pdfs')
-                .select('storage_path')
+                .select('library_id')
                 .eq('id', pdfId)
                 .single();
 
-            if (pdf?.storage_path) {
-                // 2. Eliminar archivo del storage
-                await supabase.storage
-                    .from('pdfs')
-                    .remove([pdf.storage_path]);
-            }
-
-            // 3. Eliminar registro de la base de datos
+            // Eliminar el PDF
             const { error } = await supabase
                 .from('pdfs')
                 .delete()
@@ -189,10 +186,19 @@ export const databaseService = {
 
             if (error) throw error;
 
+            // Actualizar el contador de la biblioteca
+            if (pdf?.library_id) {
+                const { error: updateError } = await supabase.rpc('decrement_library_pdf_count', {
+                    library_id: pdf.library_id
+                });
+
+                if (updateError) throw updateError;
+            }
+
             return { error: null };
         } catch (error) {
             console.error('Error en deletePDF:', error);
-            return { error: error.message };
+            return { error };
         }
     },
 

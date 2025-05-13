@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { databaseService } from '../../services/databaseService';
 import { toast } from 'react-toastify';
-import './PDFLibrary.css'; // Asegúrate de que esta línea existe
+import '../styles/PDFLibrary.css';
 import { supabase } from '../../supabase/client';  // Añadir esta importación al inicio
 import PDFGallery from './PDFGallery';
 import * as pdfjsLib from 'pdfjs-dist';
@@ -25,6 +25,7 @@ const PDFLibrary = () => {
     const [libraryPdfs, setLibraryPdfs] = useState({});
     const [uploadingImage, setUploadingImage] = useState(null);
     const [stats, setStats] = useState(null);
+    const [expandedLibrary, setExpandedLibrary] = useState(null);
 
     // Cargar bibliotecas y sus PDFs
     const loadLibraries = async () => {
@@ -193,6 +194,9 @@ const PDFLibrary = () => {
             // 5. Actualizar la UI
             await loadPDFsForLibrary(selectedLibrary);
             
+            // Actualizar la lista de bibliotecas para reflejar el nuevo contador
+            await loadLibraries();
+            
             toast.success('PDF añadido correctamente con portada');
             setShowPdfModal(false);
             setSelectedFile(null);
@@ -286,12 +290,8 @@ const PDFLibrary = () => {
                 [libraryId]: prev[libraryId].filter(pdf => pdf.id !== pdfId)
             }));
 
-            // Actualizar el contador de PDFs en la biblioteca
-            setLibraries(libraries.map(lib => 
-                lib.id === libraryId 
-                    ? { ...lib, pdf_count: (lib.pdf_count || 0) - 1 }
-                    : lib
-            ));
+            // Recargar las bibliotecas para actualizar los contadores
+            await loadLibraries();
 
             toast.success('PDF eliminado correctamente');
         } catch (error) {
@@ -335,6 +335,11 @@ const PDFLibrary = () => {
         } else {
             toast.error('URL del PDF no disponible');
         }
+    };
+
+    // Función para manejar la expansión/contracción
+    const toggleLibrary = (libraryId) => {
+        setExpandedLibrary(expandedLibrary === libraryId ? null : libraryId);
     };
 
     return (
@@ -460,65 +465,105 @@ const PDFLibrary = () => {
                     ) : (
                         libraries.map(library => (
                             <div key={library.id} className="library-card animate-scale-in">
-                                <div className="library-cover">
-                                    {library.cover_image ? (
-                                        <img 
-                                            src={library.cover_image} 
-                                            alt={library.name}
-                                            className={uploadingImage === library.id ? 'image-loading' : ''}
+                                <div 
+                                    className="library-header-card"
+                                    onClick={() => toggleLibrary(library.id)}
+                                >
+                                    <div className="library-cover">
+                                        {library.cover_image ? (
+                                            <img 
+                                                src={library.cover_image} 
+                                                alt={library.name}
+                                                className={uploadingImage === library.id ? 'image-loading' : ''}
+                                            />
+                                        ) : (
+                                            <i className="fas fa-book-open"></i>
+                                        )}
+                                        <input
+                                            type="file"
+                                            id={`cover-upload-${library.id}`}
+                                            accept="image/*"
+                                            onChange={(e) => handleImageUpload(e, library.id)}
+                                            style={{ display: 'none' }}
                                         />
-                                    ) : (
-                                        <i className="fas fa-book-open"></i>
-                                    )}
-                                    <input
-                                        type="file"
-                                        id={`cover-upload-${library.id}`}
-                                        accept="image/*"
-                                        onChange={(e) => handleImageUpload(e, library.id)}
-                                        style={{ display: 'none' }}
-                                    />
-                                    <label 
-                                        htmlFor={`cover-upload-${library.id}`}
-                                        className="upload-image-button"
-                                        title="Cambiar imagen de portada"
-                                    >
-                                        <i className="fas fa-camera"></i>
-                                    </label>
-                                </div>
-                                <div className="library-info">
-                                    <h3>{library.name}</h3>
-                                    <p>{library.description || 'Sin descripción'}</p>
-                                    <div className="library-stats">
-                                        <small>PDFs: {library.pdf_count || 0}</small>
-                                        <small>Creada: {new Date(library.created_at).toLocaleDateString()}</small>
+                                        <label 
+                                            htmlFor={`cover-upload-${library.id}`}
+                                            className="upload-image-button"
+                                            onClick={(e) => e.stopPropagation()}
+                                            title="Cambiar imagen de portada"
+                                        >
+                                            <i className="fas fa-camera"></i>
+                                        </label>
                                     </div>
-                                    
-                                    {/* Lista de PDFs */}
+                                    <div className="library-info">
+                                        <h3>{library.name}</h3>
+                                        <p>{library.description || 'Sin descripción'}</p>
+                                        <div className="library-stats">
+                                            <small>PDFs: {library.pdf_count || 0}</small>
+                                            <small>Creada: {new Date(library.created_at).toLocaleDateString()}</small>
+                                        </div>
+                                    </div>
+                                    <div className="library-expand-icon">
+                                        <i className={`fas fa-chevron-${expandedLibrary === library.id ? 'up' : 'down'}`}></i>
+                                    </div>
+                                </div>
+
+                                <div className={`library-content ${expandedLibrary === library.id ? 'expanded' : ''}`}>
                                     <div className="pdf-list">
                                         <h4>PDFs en esta biblioteca:</h4>
                                         {libraryPdfs[library.id]?.length > 0 ? (
-                                            libraryPdfs[library.id].map(pdf => (
-                                                <div key={pdf.id} className="pdf-item">
-                                                    <i className="fas fa-file-pdf"></i>
-                                                    <span className="pdf-title">{pdf.title}</span>
-                                                    <div className="pdf-actions">
-                                                        <button 
-                                                            className="btn-open" 
-                                                            title="Abrir PDF"
-                                                            onClick={() => handleOpenPdf(pdf)}
-                                                        >
-                                                            <i className="fas fa-external-link-alt"></i>
-                                                        </button>
-                                                        <button 
-                                                            className="btn-delete" 
-                                                            title="Eliminar PDF"
-                                                            onClick={() => handleDeletePdf(pdf.id, library.id)}
-                                                        >
-                                                            <i className="fas fa-trash-alt"></i>
-                                                        </button>
+                                            <div className="pdf-grid">
+                                                {libraryPdfs[library.id].map(pdf => (
+                                                    <div key={pdf.id} className="pdf-card">
+                                                        <div className="pdf-cover">
+                                                            {pdf.cover_url ? (
+                                                                <img 
+                                                                    src={pdf.cover_url} 
+                                                                    alt={pdf.title}
+                                                                    className="pdf-thumbnail"
+                                                                    onError={(e) => {
+                                                                        e.target.onerror = null;
+                                                                        e.target.src = '/placeholder.png';
+                                                                    }}
+                                                                />
+                                                            ) : (
+                                                                <div className="pdf-thumbnail-placeholder">
+                                                                    <i className="fas fa-file-pdf"></i>
+                                                                </div>
+                                                            )}
+                                                            <div className="pdf-actions">
+                                                                <button 
+                                                                    className="btn-action"
+                                                                    onClick={() => handleOpenPdf(pdf)}
+                                                                    title="Abrir PDF"
+                                                                >
+                                                                    <i className="fas fa-external-link-alt"></i>
+                                                                </button>
+                                                                <button 
+                                                                    className="btn-action delete"
+                                                                    onClick={() => handleDeletePdf(pdf.id, library.id)}
+                                                                    title="Eliminar PDF"
+                                                                >
+                                                                    <i className="fas fa-trash-alt"></i>
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                        <div className="pdf-info">
+                                                            <h5 className="pdf-title">{pdf.title}</h5>
+                                                            <div className="pdf-meta">
+                                                                <span>
+                                                                    <i className="fas fa-hdd"></i>
+                                                                    {formatBytes(pdf.file_size)}
+                                                                </span>
+                                                                <span>
+                                                                    <i className="fas fa-calendar-alt"></i>
+                                                                    {new Date(pdf.created_at).toLocaleDateString()}
+                                                                </span>
+                                                            </div>
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            ))
+                                                ))}
+                                            </div>
                                         ) : (
                                             <p className="no-pdfs">No hay PDFs en esta biblioteca</p>
                                         )}
