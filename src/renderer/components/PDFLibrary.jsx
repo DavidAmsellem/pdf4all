@@ -129,80 +129,38 @@ const PDFLibrary = () => {
     const handleAssignPdf = async (e) => {
         e.preventDefault();
         setLoading(true);
+
         try {
             if (!selectedFile || !selectedLibrary) {
-                throw new Error('Faltan datos requeridos');
+                throw new Error('Selecciona un archivo y una biblioteca');
             }
 
-            // 1. Extraer la primera página como imagen
-            const arrayBuffer = await selectedFile.arrayBuffer();
-            const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
-            const page = await pdf.getPage(1);
-            
-            // Configurar el canvas para la portada
-            const viewport = page.getViewport({ scale: 1.0 });
-            const canvas = document.createElement('canvas');
-            const context = canvas.getContext('2d');
-            canvas.width = viewport.width;
-            canvas.height = viewport.height;
-
-            // Renderizar la página en el canvas
-            await page.render({
-                canvasContext: context,
-                viewport: viewport
-            }).promise;
-
-            // Convertir el canvas a blob
-            const coverBlob = await new Promise(resolve => {
-                canvas.toBlob(resolve, 'image/png', 0.75);
-            });
-
-            // 2. Subir la portada al bucket 'pdfs'
-            const coverFileName = `covers/${Date.now()}-${selectedFile.name.replace('.pdf', '')}.png`;
-            const { data: coverData, error: coverError } = await supabase.storage
-                .from('pdfs') // Usar el bucket 'pdfs' existente
-                .upload(coverFileName, coverBlob);
-
-            if (coverError) {
-                console.error('Error al subir la portada:', coverError);
-                throw new Error('Error al guardar la portada del PDF');
-            }
-
-            // Obtener la URL pública de la portada
-            const { data: { publicUrl: coverUrl } } = supabase.storage
-                .from('pdfs')
-                .getPublicUrl(coverFileName);
-
-            // 3. Preparar los datos del PDF
             const fileData = {
                 title: selectedFile.name.replace('.pdf', ''),
                 fileName: selectedFile.name,
                 libraryId: selectedLibrary,
                 userId: user.id,
                 fileSize: selectedFile.size,
-                file: selectedFile,
-                coverUrl: coverUrl,
-                coverPath: coverData.path
+                file: selectedFile
             };
 
-            // 4. Crear el PDF usando el servicio
             const { data, error } = await databaseService.createPDF(fileData);
             
-            if (error) throw error;
+            if (error) {
+                console.error('Error detallado:', error);
+                throw new Error(error.message);
+            }
 
-            // 5. Actualizar la UI
+            // Recargar PDFs y bibliotecas
             await loadPDFsForLibrary(selectedLibrary);
-            
-            // Actualizar la lista de bibliotecas para reflejar el nuevo contador
             await loadLibraries();
             
-            toast.success('PDF añadido correctamente con portada');
+            toast.success('PDF añadido correctamente');
             setShowPdfModal(false);
             setSelectedFile(null);
             setSelectedLibrary('');
 
         } catch (err) {
-            console.error('Error al asignar PDF:', err);
             toast.error(err.message || 'Error al asignar el PDF');
         } finally {
             setLoading(false);

@@ -1,5 +1,6 @@
 import { supabase } from '../supabase/client';
 import * as pdfjsLib from 'pdfjs-dist';
+import { encryptionService } from './encryptionService';
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
 
 const getSignedUrl = async (path, expiresIn = 3600) => {
@@ -88,66 +89,145 @@ export const databaseService = {
 
     createPDF: async (fileData) => {
         try {
+            if (!fileData.title || !fileData.file || !fileData.libraryId || !fileData.userId) {
+                throw new Error('Faltan datos requeridos para crear el PDF');
+            }
+
             // 1. Subir el PDF
-            const pdfFileName = `pdfs/${Date.now()}-${fileData.fileName}`;
+            const pdfFileName = `${Date.now()}-${fileData.fileName}`;
             const { data: fileUpload, error: uploadError } = await supabase.storage
                 .from('pdfs')
                 .upload(pdfFileName, fileData.file);
 
-            if (uploadError) throw uploadError;
+            if (uploadError) {
+                console.error('Error en la subida:', uploadError);
+                throw uploadError;
+            }
 
             // 2. Obtener URL firmada para el PDF
-            const { data: { signedUrl: pdfSignedUrl } } = await supabase.storage
+            const { data: urlData, error: urlError } = await supabase.storage
                 .from('pdfs')
                 .createSignedUrl(fileUpload.path, 3600);
 
-            // 3. Preparar datos del PDF para la base de datos
+            if (urlError) {
+                console.error('Error al crear URL:', urlError);
+                throw urlError;
+            }
+
+            // 3. Generar portada del PDF
+            let coverUrl = null;
+            let coverPath = null;
+
+            try {
+                // Cargar el PDF para generar la portada
+                const pdfData = await pdfjsLib.getDocument(urlData.signedUrl).promise;
+                const page = await pdfData.getPage(1);
+                const viewport = page.getViewport({ scale: 1.0 });
+
+                // Crear un canvas para renderizar la portada
+                const canvas = document.createElement('canvas');
+                const context = canvas.getContext('2d');
+                canvas.height = viewport.height;
+                canvas.width = viewport.width;
+
+                await page.render({
+                    canvasContext: context,
+                    viewport: viewport
+                }).promise;
+
+                // Convertir el canvas a Blob
+                const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.75));
+                const coverFileName = `covers/${Date.now()}-${fileData.fileName.replace('.pdf', '.jpg')}`;
+
+                // Subir la portada
+                const { data: coverUpload, error: coverError } = await supabase.storage
+                    .from('pdfs')
+                    .upload(coverFileName, blob);
+
+                if (coverError) throw coverError;
+
+                // Obtener URL firmada para la portada
+                const { data: coverUrlData } = await supabase.storage
+                    .from('pdfs')
+                    .createSignedUrl(coverUpload.path, 3600);
+
+                coverUrl = coverUrlData.signedUrl;
+                coverPath = coverUpload.path;
+
+            } catch (coverError) {
+                console.warn('No se pudo generar la portada:', coverError);
+            }
+
+            // 4. Cifrar datos sensibles
+            const title_encrypted = encryptionService.encrypt(fileData.title);
+            const file_name_encrypted = encryptionService.encrypt(fileData.fileName);
+
+            // 5. Preparar datos para inserción
             const pdfData = {
                 title: fileData.title,
                 file_name: fileData.fileName,
+                title_encrypted,
+                file_name_encrypted,
                 library_id: fileData.libraryId,
                 user_id: fileData.userId,
                 file_size: fileData.fileSize,
                 storage_path: fileUpload.path,
-                public_url: pdfSignedUrl
+                public_url: urlData.signedUrl,
+                cover_url: coverUrl,
+                cover_path: coverPath
             };
 
-            // 4. Si hay datos de portada, añadirlos
-            if (fileData.coverPath) {
-                const { data: { signedUrl: coverSignedUrl } } = await supabase.storage
-                    .from('pdfs')
-                    .createSignedUrl(fileData.coverPath, 3600);
-
-                pdfData.cover_path = fileData.coverPath;
-                pdfData.cover_url = coverSignedUrl;
-            }
-
-            // 5. Crear el registro en la base de datos
-            const { data, error } = await supabase
+            // 6. Insertar en la base de datos
+            const { data, error: insertError } = await supabase
                 .from('pdfs')
                 .insert([pdfData])
-                .select()
+                .select('*')
                 .single();
 
-            if (error) throw error;
-            return { data, error: null };
+            if (insertError) {
+                console.error('Error de inserción:', insertError);
+                // Limpiar archivos subidos si falla la inserción
+                await supabase.storage.from('pdfs').remove([fileUpload.path]);
+                if (coverPath) {
+                    await supabase.storage.from('pdfs').remove([coverPath]);
+                }
+                throw insertError;
+            }
+
+            return { 
+                data: {
+                    ...data,
+                    title: data.title,
+                    file_name: data.file_name,
+                    cover_url: coverUrl
+                }, 
+                error: null 
+            };
+
         } catch (error) {
-            console.error('Error en createPDF:', error);
+            console.error('Error completo:', error);
             return { data: null, error };
         }
     },
 
     getPDFsByLibrary: async (libraryId) => {
         try {
-            const { data: pdfs, error } = await supabase
+            const { data: encryptedPdfs, error } = await supabase
                 .from('pdfs')
                 .select('*')
                 .eq('library_id', libraryId);
 
             if (error) throw error;
 
+            // Descifrar los datos
+            const decryptedPdfs = encryptedPdfs.map(pdf => ({
+                ...pdf,
+                title: pdf.title_encrypted ? encryptionService.decrypt(pdf.title_encrypted) : pdf.title,
+                file_name: pdf.file_name_encrypted ? encryptionService.decrypt(pdf.file_name_encrypted) : pdf.file_name
+            }));
+
             // Actualizar URLs firmadas para cada PDF
-            const pdfsWithSignedUrls = await Promise.all(pdfs.map(async (pdf) => {
+            const pdfsWithSignedUrls = await Promise.all(decryptedPdfs.map(async (pdf) => {
                 const [fileUrl, coverUrl] = await Promise.all([
                     getSignedUrl(pdf.storage_path),
                     pdf.cover_path ? getSignedUrl(pdf.cover_path) : null
