@@ -158,22 +158,32 @@ export const databaseService = {
                 console.warn('No se pudo generar la portada:', coverError);
             }
 
-            // 4. Cifrar datos sensibles
+            // 4. Cifrar todos los datos sensibles
             const title_encrypted = encryptionService.encrypt(fileData.title);
             const file_name_encrypted = encryptionService.encrypt(fileData.fileName);
+            const public_url_encrypted = encryptionService.encrypt(urlData.signedUrl);
+            const cover_url_encrypted = coverUrl ? encryptionService.encrypt(coverUrl) : null;
+            const storage_path_encrypted = encryptionService.encrypt(fileUpload.path);
+            const cover_path_encrypted = coverPath ? encryptionService.encrypt(coverPath) : null;
 
             // 5. Preparar datos para inserción
             const pdfData = {
-                title: fileData.title,
-                file_name: fileData.fileName,
+                // Versiones cifradas
                 title_encrypted,
                 file_name_encrypted,
+                public_url_encrypted,
+                cover_url_encrypted,
+                storage_path_encrypted,
+                cover_path_encrypted,
+                // Datos no sensibles
                 library_id: fileData.libraryId,
                 user_id: fileData.userId,
                 file_size: fileData.fileSize,
+                // Mantener versiones sin cifrar para búsquedas
+                title: fileData.title,
+                file_name: fileData.fileName,
+                // Rutas originales para manejo interno
                 storage_path: fileUpload.path,
-                public_url: urlData.signedUrl,
-                cover_url: coverUrl,
                 cover_path: coverPath
             };
 
@@ -219,14 +229,16 @@ export const databaseService = {
 
             if (error) throw error;
 
-            // Descifrar los datos
+            // Descifrar todos los datos sensibles
             const decryptedPdfs = encryptedPdfs.map(pdf => ({
                 ...pdf,
                 title: pdf.title_encrypted ? encryptionService.decrypt(pdf.title_encrypted) : pdf.title,
-                file_name: pdf.file_name_encrypted ? encryptionService.decrypt(pdf.file_name_encrypted) : pdf.file_name
+                file_name: pdf.file_name_encrypted ? encryptionService.decrypt(pdf.file_name_encrypted) : pdf.file_name,
+                public_url: pdf.public_url_encrypted ? encryptionService.decrypt(pdf.public_url_encrypted) : pdf.public_url,
+                cover_url: pdf.cover_url_encrypted ? encryptionService.decrypt(pdf.cover_url_encrypted) : pdf.cover_url
             }));
 
-            // Actualizar URLs firmadas para cada PDF
+            // Generar nuevas URLs firmadas
             const pdfsWithSignedUrls = await Promise.all(decryptedPdfs.map(async (pdf) => {
                 const [fileUrl, coverUrl] = await Promise.all([
                     getSignedUrl(pdf.storage_path),
@@ -267,29 +279,28 @@ export const databaseService = {
     // Añadir método para eliminar PDF
     deletePDF: async (pdfId) => {
         try {
-            // Primero obtener el library_id del PDF
+            // Obtener información del PDF antes de eliminarlo
             const { data: pdf } = await supabase
                 .from('pdfs')
-                .select('library_id')
+                .select('*')
                 .eq('id', pdfId)
                 .single();
 
-            // Eliminar el PDF
+            if (!pdf) throw new Error('PDF no encontrado');
+
+            // Eliminar archivos de almacenamiento
+            await Promise.all([
+                supabase.storage.from('pdfs').remove([pdf.storage_path]),
+                pdf.cover_path ? supabase.storage.from('pdfs').remove([pdf.cover_path]) : Promise.resolve()
+            ]);
+
+            // Eliminar registro de la base de datos
             const { error } = await supabase
                 .from('pdfs')
                 .delete()
                 .eq('id', pdfId);
 
             if (error) throw error;
-
-            // Actualizar el contador de la biblioteca
-            if (pdf?.library_id) {
-                const { error: updateError } = await supabase.rpc('decrement_library_pdf_count', {
-                    library_id: pdf.library_id
-                });
-
-                if (updateError) throw updateError;
-            }
 
             return { error: null };
         } catch (error) {
@@ -300,13 +311,12 @@ export const databaseService = {
 
     getStats: async (userId) => {
         try {
-            // Obtener conteo y último PDF actualizado
-            const { data: pdfs, error: pdfError } = await supabase
+            const { data: encryptedPdfs, error: pdfError } = await supabase
                 .from('pdfs')
                 .select(`
                     id, 
                     file_size,
-                    title,
+                    title_encrypted,
                     updated_at,
                     libraries(name)
                 `)
@@ -316,12 +326,14 @@ export const databaseService = {
             if (pdfError) throw pdfError;
 
             const stats = {
-                totalPdfs: pdfs.length,
-                totalSize: pdfs.reduce((acc, pdf) => acc + (pdf.file_size || 0), 0),
-                lastUpdated: pdfs[0] ? {
-                    title: pdfs[0].title,
-                    library: pdfs[0].libraries?.name,
-                    date: new Date(pdfs[0].updated_at).toLocaleDateString()
+                totalPdfs: encryptedPdfs.length,
+                totalSize: encryptedPdfs.reduce((acc, pdf) => acc + (pdf.file_size || 0), 0),
+                lastUpdated: encryptedPdfs[0] ? {
+                    title: encryptedPdfs[0].title_encrypted ? 
+                        encryptionService.decrypt(encryptedPdfs[0].title_encrypted) : 
+                        encryptedPdfs[0].title,
+                    library: encryptedPdfs[0].libraries?.name,
+                    date: new Date(encryptedPdfs[0].updated_at).toLocaleDateString()
                 } : null
             };
 
@@ -334,7 +346,7 @@ export const databaseService = {
 
     getAllPDFs: async (userId) => {
         try {
-            const { data, error } = await supabase
+            const { data: encryptedPdfs, error } = await supabase
                 .from('pdfs')
                 .select(`
                     *,
@@ -347,8 +359,24 @@ export const databaseService = {
                 .order('created_at', { ascending: false });
 
             if (error) throw error;
+
+            // Descifrar los datos
+            const decryptedPdfs = await Promise.all(encryptedPdfs.map(async (pdf) => {
+                const [fileUrl, coverUrl] = await Promise.all([
+                    getSignedUrl(pdf.storage_path),
+                    pdf.cover_path ? getSignedUrl(pdf.cover_path) : null
+                ]);
+
+                return {
+                    ...pdf,
+                    title: pdf.title_encrypted ? encryptionService.decrypt(pdf.title_encrypted) : pdf.title,
+                    file_name: pdf.file_name_encrypted ? encryptionService.decrypt(pdf.file_name_encrypted) : pdf.file_name,
+                    public_url: fileUrl,
+                    cover_url: coverUrl
+                };
+            }));
             
-            return { data, error: null };
+            return { data: decryptedPdfs, error: null };
         } catch (error) {
             console.error('Error en getAllPDFs:', error);
             return { data: null, error };
