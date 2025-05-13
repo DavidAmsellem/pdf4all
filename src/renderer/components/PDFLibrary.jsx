@@ -4,7 +4,6 @@ import { databaseService } from '../../services/databaseService';
 import { toast } from 'react-toastify';
 import '../styles/PDFLibrary.css';
 import { supabase } from '../../supabase/client';  // Añadir esta importación al inicio
-import PDFGallery from './PDFGallery';
 import * as pdfjsLib from 'pdfjs-dist';
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
 
@@ -651,20 +650,6 @@ const PDFLibrary = () => {
                         </div>
                     </div>
                 )}
-
-                <div className="library-content">
-                    {selectedLibrary ? (
-                        <PDFGallery 
-                            pdfs={libraryPdfs[selectedLibrary] || []}
-                            onPdfSelect={handlePdfSelect}
-                        />
-                    ) : (
-                        <div className="select-library-message">
-                            <i className="fas fa-folder-open"></i>
-                            <p>Selecciona una biblioteca para ver sus PDFs</p>
-                        </div>
-                    )}
-                </div>
             </div>
         </>
     );
