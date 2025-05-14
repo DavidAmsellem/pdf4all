@@ -1222,3 +1222,21 @@
     gap: 1.5rem;
     margin-top: 1rem;
 }
+
+.pdf-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.pdf-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.pdf-info {
+    flex: 1;
+}

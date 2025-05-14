@@ -5,6 +5,7 @@ import { toast } from 'react-toastify';
 import '../styles/PDFLibrary.css';
 import { supabase } from '../../supabase/client';  // Añadir esta importación al inicio
 import * as pdfjsLib from 'pdfjs-dist';
+import DownloadButton from './DownloadButton';
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
 
 const PDFLibrary = () => {
@@ -514,6 +515,7 @@ const PDFLibrary = () => {
                                                                     </div>
                                                                 )}
                                                                 <div className="pdf-actions">
+                                                                    <DownloadButton pdfData={pdf} />
                                                                     <button 
                                                                         className="btn-action"
                                                                         onClick={() => handleOpenPdf(pdf)}
