@@ -15,7 +15,7 @@
     "@react-pdf/renderer": "^3.4.5",
     "@supabase/supabase-js": "^2.49.4",
     "crypto-js": "^4.2.0",
-    "pdfjs-dist": "^5.2.133",
+    "pdfjs-dist": "^3.4.120",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-pdf": "^9.2.1",
@@ -40,7 +40,10 @@
       "output": "dist"
     },
     "win": {
-      "target": ["nsis", "portable"],
+      "target": [
+        "nsis",
+        "portable"
+      ],
       "icon": "src/assets/icon.ico",
       "signAndEditExecutable": false
     },
