@@ -105,3 +105,14 @@
   background: var(--primary-color);
   color: white;
 }
+
+.cache-section {
+    margin-top: 2rem;
+    padding: 1rem;
+    background: var(--background-secondary);
+    border-radius: var(--border-radius-md);
+}
+
+.stats-dashboard {
+    margin-bottom: 2rem;
+}

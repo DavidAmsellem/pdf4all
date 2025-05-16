@@ -11,6 +11,8 @@ import Settings from './components/Settings';
 import Auth from './components/Auth';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import PDFPreloader from './components/PDFPreloader';
+
 
 
 function App() {
@@ -41,6 +43,7 @@ function App() {
         <AuthProvider>
             <ThemeProvider>
                 <div className="app" data-theme={darkMode ? 'dark' : 'light'}>
+                    <PDFPreloader />
                     <TitleBar />
                     <div className="app-content">
                         <Sidebar 

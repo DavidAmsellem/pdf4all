@@ -3,6 +3,8 @@ const path = require('path');
 const fs = require('fs').promises;
 const https = require('https');
 const http = require('http');
+const cacheService = require('../services/cacheService');
+const fetch = require('node-fetch');
 
 // Configuración de almacenamiento local
 function getLocalStoragePath() {
@@ -169,6 +171,168 @@ ipcMain.handle('download-pdf-from-supabase', async (event, { url, pdfId, metadat
     }
 });
 
+// Manejadores de caché
+ipcMain.handle('save-to-cache', async (event, pdfId, data, metadata) => {
+    return await cacheService.saveToCache(pdfId, data, metadata);
+});
+
+ipcMain.handle('get-from-cache', async (event, pdfId) => {
+    return await cacheService.getFromCache(pdfId);
+});
+
+ipcMain.handle('remove-from-cache', async (event, pdfId) => {
+    return await cacheService.removeFromCache(pdfId);
+});
+
+// Manejador para descargar y cachear
+ipcMain.handle('download-and-cache', async (event, { id, url, metadata }) => {
+    try {
+        // Intentar obtener del caché primero
+        const cached = await cacheService.getFromCache(id);
+        if (cached) {
+            console.log('Usando archivo cacheado:', id);
+            return {
+                success: true,
+                data: Array.from(cached.data)
+            };
+        }
+
+        // Asegurarnos de que la URL sea absoluta
+        const fullUrl = new URL(url).toString();
+        console.log('Descargando desde URL:', fullUrl);
+
+        // Descargar el archivo
+        const response = await fetch(fullUrl);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const buffer = await response.buffer();
+        console.log('Archivo descargado, tamaño:', buffer.length);
+
+        // Guardar en caché
+        await cacheService.saveToCache(id, buffer, metadata);
+        console.log('Archivo guardado en caché:', id);
+
+        return {
+            success: true,
+            data: Array.from(buffer)
+        };
+    } catch (error) {
+        console.error('Error en download-and-cache:', error);
+        return {
+            success: false,
+            error: error.message
+        };
+    }
+});
+
+// Manejador para precargar PDFs
+ipcMain.handle('preload-pdfs', async (event, pdfsData) => {
+    try {
+        console.log('Iniciando precarga de PDFs...');
+        const results = await Promise.allSettled(
+            pdfsData.map(async pdf => {
+                try {
+                    // Verificar si ya está en caché
+                    const cached = await cacheService.getFromCache(pdf.id);
+                    if (cached) {
+                        console.log(`PDF ${pdf.id} ya está en caché`);
+                        return { id: pdf.id, status: 'cached' };
+                    }
+
+                    // Obtener URL firmada
+                    const { data: { signedUrl }, error: urlError } = await supabase.storage
+                        .from('pdfs')
+                        .createSignedUrl(pdf.storage_path, 60);
+
+                    if (urlError) throw urlError;
+
+                    // Descargar el archivo
+                    const response = await fetch(signedUrl);
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                    
+                    const buffer = await response.buffer();
+
+                    // Guardar en caché
+                    await cacheService.saveToCache(pdf.id, buffer, {
+                        title: pdf.title,
+                        storage_path: pdf.storage_path
+                    });
+
+                    console.log(`PDF ${pdf.id} precargado correctamente`);
+                    return { id: pdf.id, status: 'downloaded' };
+                } catch (error) {
+                    console.error(`Error al precargar PDF ${pdf.id}:`, error);
+                    return { id: pdf.id, status: 'error', error: error.message };
+                }
+            })
+        );
+
+        return {
+            success: true,
+            results: results.map(r => r.value || r.reason)
+        };
+    } catch (error) {
+        console.error('Error en precarga:', error);
+        return { success: false, error: error.message };
+    }
+});
+
+ipcMain.handle('refresh-cache', async () => {
+    try {
+        // Obtener todos los PDFs de Supabase
+        const { data: pdfs, error } = await supabase
+            .from('pdfs')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        // Procesar cada PDF
+        const results = await Promise.allSettled(
+            pdfs.map(async pdf => {
+                try {
+                    // Obtener URL firmada
+                    const { data: { signedUrl }, error: urlError } = await supabase.storage
+                        .from('pdfs')
+                        .createSignedUrl(pdf.storage_path, 60);
+
+                    if (urlError) throw urlError;
+
+                    // Descargar y guardar en caché
+                    const response = await fetch(signedUrl);
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                    
+                    const buffer = await response.buffer();
+                    await cacheService.saveToCache(pdf.id, buffer, {
+                        title: pdf.title,
+                        storage_path: pdf.storage_path
+                    });
+
+                    return { id: pdf.id, status: 'success' };
+                } catch (error) {
+                    console.error(`Error al actualizar caché para ${pdf.id}:`, error);
+                    return { id: pdf.id, status: 'error', error: error.message };
+                }
+            })
+        );
+
+        const stats = {
+            total: pdfs.length,
+            success: results.filter(r => r.value?.status === 'success').length,
+            errors: results.filter(r => r.value?.status === 'error').length
+        };
+
+        console.log('Estadísticas de actualización:', stats);
+        return { success: true, stats };
+
+    } catch (error) {
+        console.error('Error al actualizar caché:', error);
+        return { success: false, error: error.message };
+    }
+});
+
 // Manejadores de ventana
 ipcMain.handle('minimize-window', () => {
     BrowserWindow.getFocusedWindow()?.minimize();
@@ -185,5 +349,58 @@ ipcMain.handle('maximize-window', () => {
 
 ipcMain.handle('close-window', () => {
     BrowserWindow.getFocusedWindow()?.close();
+});
+
+ipcMain.handle('open-cache-folder', async () => {
+    try {
+        const cachePath = path.join(app.getPath('userData'), 'pdf-cache');
+        await shell.openPath(cachePath);
+        return { success: true };
+    } catch (error) {
+        console.error('Error al abrir carpeta de caché:', error);
+        return { success: false, error: error.message };
+    }
+});
+
+ipcMain.handle('clear-cache', async () => {
+    try {
+        const cachePath = path.join(app.getPath('userData'), 'pdf-cache');
+        const files = await fs.readdir(cachePath);
+        
+        await Promise.all(
+            files.map(file => fs.unlink(path.join(cachePath, file)))
+        );
+        
+        return { success: true };
+    } catch (error) {
+        console.error('Error al limpiar caché:', error);
+        return { success: false, error: error.message };
+    }
+});
+
+ipcMain.handle('get-cache-stats', async () => {
+    try {
+        const cachePath = path.join(app.getPath('userData'), 'pdf-cache');
+        const files = await fs.readdir(cachePath);
+        
+        const pdfFiles = files.filter(f => f.endsWith('.pdf'));
+        const totalSize = await Promise.all(
+            pdfFiles.map(async f => {
+                const stats = await fs.stat(path.join(cachePath, f));
+                return stats.size;
+            })
+        ).then(sizes => sizes.reduce((a, b) => a + b, 0));
+
+        return {
+            success: true,
+            stats: {
+                count: pdfFiles.length,
+                size: totalSize
+            }
+        };
+    } catch (error) {
+        console.error('Error al obtener estadísticas:', error);
+        return { success: false, error: error.message };
+    }
 });
 

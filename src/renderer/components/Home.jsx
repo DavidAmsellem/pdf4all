@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { databaseService } from '../../services/databaseService';
 import { toast } from 'react-toastify';
+import CacheStatus from './CacheStatus';
 import './Home.css';
 
 const Home = () => {
@@ -69,6 +70,10 @@ const Home = () => {
                         </div>
                     )}
                 </div>
+            </div>
+
+            <div className="cache-section">
+                <CacheStatus />
             </div>
         </div>
     );

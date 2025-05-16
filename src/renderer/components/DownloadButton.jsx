@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { supabase } from '../../supabase/client';
-import { encryptionService } from '../../services/encryptionService';
 import { toast } from 'react-toastify';
 import '../styles/DownloadButton.css';
 
@@ -11,33 +10,35 @@ const DownloadButton = ({ pdfData }) => {
         try {
             setDownloading(true);
 
-            // Verificar que tenemos los datos necesarios
-            if (!pdfData || !pdfData.storage_path) {
-                throw new Error('Información del PDF no disponible');
-            }
-
-            // Descifrar el nombre del archivo
-            const decryptedTitle = pdfData.title_encrypted ? 
-                encryptionService.decrypt(pdfData.title_encrypted) : 
-                pdfData.title;
-
-            // Obtener el archivo usando la ruta de almacenamiento
-            const { data, error } = await supabase.storage
+            // Obtener URL firmada de Supabase
+            const { data: { signedUrl }, error: urlError } = await supabase.storage
                 .from('pdfs')
-                .download(pdfData.storage_path);
+                .createSignedUrl(pdfData.storage_path, 60);
 
-            if (error) {
-                console.error('Error de Supabase:', error);
-                throw error;
-            }
+            if (urlError) throw urlError;
+
+            console.log('URL firmada obtenida:', signedUrl); // Para depuración
+
+            // Usar el API de electron para descargar y cachear
+            const result = await window.electronAPI.downloadAndCache({
+                id: pdfData.id,
+                url: signedUrl, // Asegúrate de que esta URL sea completa
+                metadata: {
+                    title: pdfData.title,
+                    storage_path: pdfData.storage_path
+                }
+            });
+
+            if (!result.success) throw new Error(result.error);
+            const pdfBuffer = new Uint8Array(result.data);
 
             // Crear el blob y descargar
-            const blob = new Blob([data], { type: 'application/pdf' });
+            const blob = new Blob([pdfBuffer], { type: 'application/pdf' });
             const url = window.URL.createObjectURL(blob);
             const link = document.createElement('a');
             
             link.href = url;
-            link.download = `${decryptedTitle}.pdf`;
+            link.download = `${pdfData.title}.pdf`;
             document.body.appendChild(link);
             link.click();
             

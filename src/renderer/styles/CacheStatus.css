@@ -1,0 +1,62 @@
+.cache-status {
+    background: var(--surface-color);
+    border-radius: var(--border-radius-md);
+    padding: var(--spacing-lg);
+    margin-bottom: var(--spacing-lg);
+    box-shadow: var(--shadow-sm);
+}
+
+.cache-info h3 {
+    margin: 0 0 var(--spacing-md) 0;
+    color: var(--text-primary);
+}
+
+.cache-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+}
+
+.stat-item {
+    display: flex;
+    justify-content: space-between;
+    padding: var(--spacing-sm);
+    background: var(--background-secondary);
+    border-radius: var(--border-radius-sm);
+}
+
+.cache-actions {
+    display: flex;
+    gap: var(--spacing-md);
+}
+
+.cache-button {
+    padding: var(--spacing-sm) var(--spacing-md);
+    border: none;
+    border-radius: var(--border-radius-sm);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    transition: background 0.2s;
+}
+
+.cache-button.refresh {
+    background: var(--primary-color);
+    color: white;
+}
+
+.cache-button.clear {
+    background: var(--error-color);
+    color: white;
+}
+
+.cache-button:hover {
+    opacity: 0.9;
+}
+
+.cache-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
