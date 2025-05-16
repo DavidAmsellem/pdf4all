@@ -36,5 +36,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
     openCacheFolder: () => ipcRenderer.invoke('open-cache-folder'),
     clearCache: () => ipcRenderer.invoke('clear-cache'),
     getCacheStats: () => ipcRenderer.invoke('get-cache-stats'),
-    refreshCache: () => ipcRenderer.invoke('refresh-cache')
+    refreshCache: () => ipcRenderer.invoke('refresh-cache'),
+    
+    // Funciones para YouSign
+    sendToYouSign: (data) => ipcRenderer.invoke('send-to-yousign', data),
+    getYouSignStatus: (procedureId) => ipcRenderer.invoke('get-yousign-status', procedureId)
 });

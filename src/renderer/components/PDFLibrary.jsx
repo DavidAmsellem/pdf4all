@@ -6,6 +6,7 @@ import '../styles/PDFLibrary.css';
 import { supabase } from '../../supabase/client';  // Añadir esta importación al inicio
 import * as pdfjsLib from 'pdfjs-dist';
 import DownloadButton from './DownloadButton';
+import YouSignButton from './YouSignButton';
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
 
 const PDFLibrary = () => {
@@ -304,28 +305,7 @@ const PDFLibrary = () => {
 
     return (
         <>
-            <div className="titlebar">
-                <div className="titlebar-buttons">
-                    <button 
-                        className="titlebar-button" 
-                        onClick={() => window.electron.minimizeWindow()}
-                    >
-                        <i className="fas fa-window-minimize"></i>
-                    </button>
-                    <button 
-                        className="titlebar-button"
-                        onClick={() => window.electron.maximizeWindow()}
-                    >
-                        <i className="fas fa-window-maximize"></i>
-                    </button>
-                    <button 
-                        className="titlebar-button close"
-                        onClick={() => window.electron.closeWindow()}
-                    >
-                        <i className="fas fa-times"></i>
-                    </button>
-                </div>
-            </div>
+            
             <div className="pdf-library-container">
                 <div className="library-header">
                     <h1>Mis Bibliotecas</h1>
@@ -523,8 +503,15 @@ const PDFLibrary = () => {
                                                                     >
                                                                         <i className="fas fa-external-link-alt"></i>
                                                                     </button>
+                                                                    
+                                                                    {/* Nuevo componente YouSignButton */}
+                                                                    <YouSignButton 
+                                                                        pdfId={pdf.id} 
+                                                                        title={pdf.title || 'Documento sin título'}
+                                                                    />
+                                                                    
                                                                     <button 
-                                                                        className="btn-action delete"
+                                                                        className="btn-action btn-delete"
                                                                         onClick={() => handleDeletePdf(pdf.id, library.id)}
                                                                         title="Eliminar PDF"
                                                                     >

@@ -558,6 +558,7 @@
   gap: 0.5rem;
   opacity: 0;
   transition: opacity 0.2s ease;
+  margin-top: 0.5rem;
 }
 
 .pdf-item:hover .pdf-actions {
@@ -799,11 +800,18 @@
   justify-content: center;
   transition: all 0.2s ease;
   backdrop-filter: blur(4px);
+  padding: 0.4rem 0.6rem;
+  border-radius: var(--radius-sm);
+  background: var(--surface-color);
+  color: var(--text-primary);
+  gap: 0.25rem;
+  font-size: 0.8rem;
 }
 
 .btn-action:hover {
   background: var(--primary-color);
   transform: scale(1.1);
+  background: var(--background-hover);
 }
 
 .btn-action.delete:hover {
@@ -812,6 +820,12 @@
 
 .btn-action i {
   font-size: 1rem;
+  font-size: 0.9rem;
+}
+
+.btn-delete:hover {
+  background: var(--danger-color);
+  color: white;
 }
 
 /* Estilo para la sección de PDFs */

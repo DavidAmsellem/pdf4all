@@ -5,6 +5,8 @@ const https = require('https');
 const http = require('http');
 const cacheService = require('../services/cacheService');
 const fetch = require('node-fetch');
+// Importar el servicio de YouSign
+const { youSignService } = require('../services/youSignService');
 
 // Configuración de almacenamiento local
 function getLocalStoragePath() {
@@ -401,6 +403,55 @@ ipcMain.handle('get-cache-stats', async () => {
     } catch (error) {
         console.error('Error al obtener estadísticas:', error);
         return { success: false, error: error.message };
+    }
+});
+
+// Manejador para enviar a YouSign
+ipcMain.handle('send-to-yousign', async (event, data) => {
+    try {
+        console.log('Procesando solicitud de firma para:', data.pdfId);
+        
+        // Obtener el PDF de la caché
+        const cached = await cacheService.getFromCache(data.pdfId);
+        if (!cached || !cached.data) {
+            throw new Error('PDF no encontrado en caché');
+        }
+
+        // Enviar a YouSign
+        const result = await youSignService.createSignatureProcedure(
+            cached.data,
+            {
+                title: data.title || 'Documento para firmar',
+                signerEmail: data.signerEmail,
+                signerName: data.signerName
+            }
+        );
+
+        console.log('Resultado de YouSign:', result);
+        return result;
+    } catch (error) {
+        console.error('Error en send-to-yousign:', error);
+        return {
+            success: false,
+            error: error.message
+        };
+    }
+});
+
+// Opcional: manejador para consultar estado
+ipcMain.handle('get-yousign-status', async (event, procedureId) => {
+    try {
+        const status = await youSignService.getProcedureStatus(procedureId);
+        return {
+            success: true,
+            status
+        };
+    } catch (error) {
+        console.error('Error al obtener estado:', error);
+        return {
+            success: false,
+            error: error.message
+        };
     }
 });
 
