@@ -1,103 +1,77 @@
 import React, { useState } from 'react';
 import { toast } from 'react-toastify';
-import '../styles/YouSignButton.css';
+import YouSignWizard from './YouSignWizard';
+import '../styles/YouSignButton.css'; // Asegúrate de que la ruta sea correcta
 
+// Componente funcional que recibe pdfId y title como props
 const YouSignButton = ({ pdfId, title }) => {
+    // Estado para controlar el estado de carga
     const [loading, setLoading] = useState(false);
-    const [showForm, setShowForm] = useState(false);
-    const [formData, setFormData] = useState({
-        signerEmail: '',
-        signerName: ''
-    });
+    // Estado para mostrar/ocultar el wizard
+    const [showWizard, setShowWizard] = useState(false);
 
+    // Función que maneja el envío del formulario
     const handleSubmit = async (e) => {
-        e.preventDefault();
-        setLoading(true);
+        e.preventDefault(); // Previene el comportamiento por defecto del formulario
+        setLoading(true); // Activa el estado de carga
+
+        const formData = new FormData(e.target);
+        const data = {
+            pdfId,
+            title,
+            signerEmail: formData.get('signerEmail'),
+            signerName: formData.get('signerName')
+        };
 
         try {
-            const result = await window.electronAPI.sendToYouSign({
-                pdfId,
-                title,
-                signerEmail: formData.signerEmail,
-                signerName: formData.signerName
-            });
+            // Envía los datos a la API de electron
+            const result = await window.electronAPI.sendToYouSign(data);
 
+            // Si no hay éxito, lanza un error
             if (!result.success) {
                 throw new Error(result.error || 'Error desconocido');
             }
 
+            // Muestra notificación de éxito
             toast.success('Documento enviado para firma con YouSign');
             
+            // Si hay URL de firma, abre en nueva pestaña
             if (result.signingUrl) {
                 window.open(result.signingUrl, '_blank');
             }
             
-            setShowForm(false);
+            setShowWizard(false); // Oculta el wizard
         } catch (error) {
             console.error('Error:', error);
+            // Muestra notificación de error
             toast.error(error.message || 'Error al enviar documento para firma');
         } finally {
-            setLoading(false);
+            setLoading(false); // Desactiva el estado de carga
         }
     };
 
     return (
-        <div className="yousign-container">
-            {!showForm ? (
-                <button
-                    onClick={() => setShowForm(true)}
-                    className="btn-action"
-                    title="Firmar con YouSign"
-                >
-                    <i className="fas fa-signature"></i> YouSign
-                </button>
-            ) : (
-                <form onSubmit={handleSubmit} className="yousign-form">
-                    <div className="form-header">
-                        <h3>Firmar con YouSign: {title}</h3>
-                        <button
-                            type="button"
-                            onClick={() => setShowForm(false)}
-                            className="close-button"
-                        >
-                            ×
-                        </button>
-                    </div>
-                    <div className="form-body">
-                        <input
-                            type="email"
-                            placeholder="Email del firmante"
-                            value={formData.signerEmail}
-                            onChange={(e) => setFormData(prev => ({
-                                ...prev,
-                                signerEmail: e.target.value
-                            }))}
-                            required
-                        />
-                        <input
-                            type="text"
-                            placeholder="Nombre del firmante"
-                            value={formData.signerName}
-                            onChange={(e) => setFormData(prev => ({
-                                ...prev,
-                                signerName: e.target.value
-                            }))}
-                            required
-                        />
-                    </div>
-                    <div className="form-actions">
-                        <button
-                            type="submit"
-                            disabled={loading}
-                            className="submit-button"
-                        >
-                            {loading ? 'Enviando...' : 'Enviar para firma'}
-                        </button>
-                    </div>
-                </form>
-            )}
-        </div>
+        // Contenedor principal
+        <>
+            {/* Botón para abrir el wizard */}
+            <button
+                onClick={() => setShowWizard(true)}
+                className="btn-action"
+                title="Firmar con YouSign"
+            >
+                <i className="fas fa-signature"></i> YouSign
+            </button>
+            
+            {/* Wizard para firma con YouSign */}
+            <YouSignWizard
+                isOpen={showWizard}
+                onClose={() => setShowWizard(false)}
+                onSubmit={handleSubmit}
+                title={title}
+                loading={loading}
+            />
+        </>
     );
 };
 
-export default YouSignButton;
+export default YouSignButton; // Exporta el componente
