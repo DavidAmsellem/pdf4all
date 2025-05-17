@@ -1,5 +1,6 @@
 import React from 'react';
 import { toast } from 'react-toastify';
+import EmailStatusList from './EmailStatusList';
 import '../styles/Settings.css';
 
 const Settings = () => {
@@ -32,12 +33,6 @@ const Settings = () => {
                 <div className="settings-card">
                     <h3>Almacenamiento</h3>
                     <div className="setting-item">
-                        <label>Directorio de PDFs</label>
-                        <button className="btn-change-dir">
-                            <i className="fas fa-folder-open"></i> Cambiar
-                        </button>
-                    </div>
-                    <div className="setting-item">
                         <label>Caché de PDFs</label>
                         <button 
                             onClick={handleOpenCache}
@@ -46,6 +41,10 @@ const Settings = () => {
                             Abrir carpeta
                         </button>
                     </div>
+                </div>
+                <div className="settings-card full-width">
+                    <h3>Estado de Firmas</h3>
+                    <EmailStatusList />
                 </div>
             </div>
         </div>

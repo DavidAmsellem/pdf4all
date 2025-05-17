@@ -12,6 +12,7 @@ import Auth from './components/Auth';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import PDFPreloader from './components/PDFPreloader';
+import DocumentSigningLog from './components/DocumentSigningLog';
 
 
 
@@ -32,6 +33,8 @@ function App() {
                 return <Home />;
             case 'library':
                 return <PDFLibrary />;
+            case 'signing-log':
+                return <DocumentSigningLog />;
             case 'settings':
                 return <Settings />;
             default:

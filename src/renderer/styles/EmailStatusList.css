@@ -1,0 +1,185 @@
+.email-status-list {
+    padding: 15px;
+}
+
+.email-list {
+    display: grid;
+    gap: 15px;
+}
+
+.email-card {
+    background: white;
+    border-radius: 8px;
+    padding: 15px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: transform 0.2s ease;
+}
+
+.email-card:hover {
+    transform: translateY(-2px);
+}
+
+.email-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+}
+
+.document-info h4 {
+    margin: 0 0 8px 0;
+    color: #2c3e50;
+    font-size: 1.1rem;
+}
+
+.status-badge {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.status-ongoing { background: #fff3e0; color: #e65100; }
+.status-completed { background: #e8f5e9; color: #2e7d32; }
+.status-refused { background: #ffebee; color: #c62828; }
+.status-expired { background: #f5f5f5; color: #616161; }
+.status-initiated { background: #e3f2fd; color: #1565c0; }
+.status-unknown { background: #f5f5f5; color: #757575; }
+
+.email-date {
+    font-size: 0.85rem;
+    color: #666;
+}
+
+.email-details {
+    margin-top: 10px;
+}
+
+.email-details p {
+    margin: 8px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #555;
+}
+
+.email-details i {
+    color: #666;
+    width: 16px;
+}
+
+.loading-container {
+    text-align: center;
+    padding: 20px;
+    color: #666;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.no-data {
+    text-align: center;
+    padding: 20px;
+    color: #666;
+    font-style: italic;
+}
+
+.signers-list, .events-timeline {
+    margin-top: 15px;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 4px;
+}
+
+.signers-list h5, .events-timeline h5 {
+    margin: 0 0 10px 0;
+    color: #495057;
+    font-size: 0.9rem;
+}
+
+.signer-details {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 1;
+}
+
+.signer-name {
+    font-weight: 600;
+    color: #2c3e50;
+    font-size: 0.95rem;
+}
+
+.signer-email {
+    color: #666;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.signer-status {
+    font-size: 0.85rem;
+    color: #495057;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.signer-info {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin: 8px 0;
+    padding: 10px;
+    background: #fff;
+    border-radius: 6px;
+    border: 1px solid #e9ecef;
+    transition: background-color 0.2s;
+}
+
+.signer-info:hover {
+    background: #f8f9fa;
+}
+
+.event-info {
+    color: #666;
+}
+
+.event-info i {
+    font-size: 0.8rem;
+}
+
+.document-actions {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.download-button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background-color 0.2s;
+}
+
+.download-button:hover {
+    background-color: #45a049;
+}
+
+.download-button:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+}
+
+.download-button i {
+    font-size: 1rem;
+}

@@ -18,7 +18,13 @@ const Sidebar = ({ onNavigate, currentView }) => {
   const menuItems = [
     { id: 'home', icon: 'home', label: 'Inicio' },
     { id: 'library', icon: 'folder', label: 'Mis PDFs' },
-    { id: 'settings', icon: 'cog', label: 'Ajustes' }
+    { id: 'settings', icon: 'cog', label: 'Ajustes' },
+    {
+      id: 'signing-log',
+      icon: 'history',
+      label: 'Registro de Firmas',
+      path: '/signing-log'
+    }
   ];
 
   return (
