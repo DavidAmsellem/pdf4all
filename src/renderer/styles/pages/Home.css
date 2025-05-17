@@ -48,12 +48,14 @@
 /* Tarjetas individuales de estadísticas */
 .stat-card {
   background: var(--bg-secondary);
-  padding: var(--spacing-lg);
-  border-radius: var(--border-radius-md);
+  border-radius: 8px;
+  padding: 1.5rem;
   box-shadow: var(--shadow-sm);
-  text-align: center;
-  transition: transform var(--transition-normal);
-  border: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;  /* Añadido para centrar horizontalmente */
+  gap: 1rem;
+  transition: transform 0.2s ease;
 }
 
 [data-theme='dark'] .stat-card {
@@ -66,11 +68,44 @@
   transform: translateY(-5px); /* Elevación al pasar el mouse */
 }
 
+/* Información dentro de las tarjetas de estadísticas */
+.stat-info {
+  text-align: center;  /* Centra el texto */
+  display: flex;
+  flex-direction: column;
+  align-items: center;  /* Centra los elementos hijos verticalmente */
+  justify-content: center;  /* Centra los elementos hijos horizontalmente */
+  flex: 1;
+}
+
+/* Títulos y texto dentro de las tarjetas de estadísticas */
+.stat-info h3 {
+  margin: 0 0 0.5rem 0;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.stat-info p {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.stat-info small {
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  margin-top: 0.25rem;
+}
+
 /* Iconos dentro de las tarjetas de estadísticas */
 .stat-card i {
-  font-size: 2rem;
+  font-size: 1.5rem;
   color: var(--primary-color);
-  margin-bottom: var(--spacing-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 [data-theme='dark'] .stat-card i {

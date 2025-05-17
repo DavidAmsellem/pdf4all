@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { databaseService } from '../../services/databaseService';
 import { toast } from 'react-toastify';
@@ -8,6 +8,7 @@ import * as pdfjsLib from 'pdfjs-dist';
 import DownloadButton from './DownloadButton';
 import YouSignButton from './sign/YouSignButton';
 import LibraryFilter from './LibraryFilter';
+import EditableTitle from './library/EditableTitle';
 
 // Configuración global para el worker de PDF.js.
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
@@ -33,6 +34,9 @@ const PDFLibrary = () => {
     const [filterText, setFilterText] = useState('');
     const [sortOrder, setSortOrder] = useState('name-asc');
     const [searchType, setSearchType] = useState('all'); // Nuevo estado para el tipo de búsqueda
+    const [dragOverLibrary, setDragOverLibrary] = useState(null);
+    // Añadir ref para el input de archivo
+    const fileInputRef = useRef(null);
 
     const filteredAndSortedLibraries = useMemo(() => {
         let result = [...libraries];
@@ -375,6 +379,117 @@ const PDFLibrary = () => {
         setExpandedLibrary(prevExpandedId => (prevExpandedId === libraryId ? null : libraryId));
     };
 
+    const handleUpdateLibraryName = async (libraryId, newName) => {
+        try {
+            const { error } = await supabase
+                .from('libraries')
+                .update({ name: newName })
+                .eq('id', libraryId);
+
+            if (error) throw error;
+
+            // Actualizar el estado local
+            setLibraries(libraries.map(lib => 
+                lib.id === libraryId ? { ...lib, name: newName } : lib
+            ));
+
+            toast.success('Nombre de biblioteca actualizado');
+        } catch (error) {
+            console.error('Error al actualizar nombre:', error);
+            toast.error('Error al actualizar el nombre de la biblioteca');
+        }
+    };
+
+    const handleDragOver = (e, libraryId) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        if (!dragOverLibrary) {
+            setDragOverLibrary(libraryId);
+        }
+    };
+
+    const handleDragLeave = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setDragOverLibrary(null);
+    };
+
+    const handleDrop = async (e, libraryId) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setDragOverLibrary(null);
+
+        const file = e.dataTransfer.files[0];
+        if (file && file.type === 'application/pdf') {
+            try {
+                setLoading(true);
+                
+                const fileData = {
+                    title: file.name.replace(/\.pdf$/i, ''),
+                    fileName: file.name,
+                    libraryId: libraryId,
+                    userId: user.id,
+                    fileSize: file.size,
+                    file: file
+                };
+
+                const { data: newPdf, error: createPdfError } = await databaseService.createPDF(fileData);
+                
+                if (createPdfError) {
+                    throw new Error(createPdfError.message || 'Error al subir el PDF.');
+                }
+
+                // Actualizar el estado local
+                setLibraryPdfs(prev => ({
+                    ...prev,
+                    [libraryId]: [...(prev[libraryId] || []), newPdf]
+                }));
+
+                toast.success('PDF añadido correctamente');
+                await loadStats();
+                await loadLibraries(); // Para actualizar pdf_count
+
+            } catch (error) {
+                console.error('Error al añadir PDF:', error);
+                toast.error(error.message || 'Error al añadir el PDF');
+            } finally {
+                setLoading(false);
+            }
+        } else {
+            toast.error('Solo se permiten archivos PDF');
+        }
+    };
+
+    // Función para manejar el clic en el área de drop
+    const handleDropAreaClick = (e, libraryId) => {
+        // Prevenir que se ejecute el toggle de la biblioteca
+        e.stopPropagation();
+        
+        // Crear un input file temporal si no existe
+        if (!fileInputRef.current) {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.pdf';
+            input.style.display = 'none';
+            input.onchange = (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    handleDrop({ 
+                        preventDefault: () => {},
+                        stopPropagation: () => {},
+                        dataTransfer: { files: [file] }
+                    }, libraryId);
+                }
+            };
+            fileInputRef.current = input;
+            document.body.appendChild(input);
+        }
+        
+        // Disparar el diálogo de selección de archivo
+        fileInputRef.current.click();
+    };
+
     return (
         <>
             <div className="pdf-library-container">
@@ -503,57 +618,43 @@ const PDFLibrary = () => {
                             </div>
                         ) : (
                             filteredAndSortedLibraries.map(library => (
-                                <div key={library.id} className="library-card animate-scale-in">
-                                    <div 
-                                        className="library-header-card"
-                                        onClick={() => toggleLibrary(library.id)}
-                                        role="button"
-                                        tabIndex={0}
-                                        onKeyPress={(e) => e.key === 'Enter' && toggleLibrary(library.id)}
-                                        aria-expanded={expandedLibrary === library.id}
-                                        aria-controls={`library-content-${library.id}`}
+                                <div key={library.id} className="library-card">                                    <div 
+                                        className={`library-header-card ${dragOverLibrary === library.id ? 'drag-over' : ''}`}
+                                        onClick={(e) => {
+                                            // No ejecutar toggle si el clic fue en el título editable o en el área de drop
+                                            if (!e.target.closest('.editable-title') && !e.target.closest('.drop-indicator')) {
+                                                toggleLibrary(library.id);
+                                            }
+                                        }}
+                                        onDragOver={(e) => handleDragOver(e, library.id)}
+                                        onDragLeave={handleDragLeave}
+                                        onDrop={(e) => handleDrop(e, library.id)}
                                     >
-                                        <div className="library-cover">
-                                            {library.cover_image ? (
-                                                <img 
-                                                    src={library.cover_image} 
-                                                    alt={`Portada de ${library.name}`}
-                                                    className={uploadingImage === library.id ? 'image-loading' : ''} 
-                                                    onError={(e) => { // Fallback si la imagen no carga
-                                                        e.target.onerror = null; 
-                                                        e.target.style.display = 'none';
-                                                        const placeholder = e.target.parentElement.querySelector('.cover-placeholder-icon');
-                                                        if(placeholder) placeholder.style.display = 'flex';
-                                                    }}
-                                                />
-                                            ) : (
-                                                <i className="fas fa-book-open cover-placeholder-icon" style={{display: 'flex'}}></i>
-                                            )}
-                                            <input
-                                                type="file"
-                                                id={`cover-upload-${library.id}`}
-                                                accept="image/*"
-                                                onChange={(e) => handleImageUpload(e, library.id)}
-                                                style={{ display: 'none' }}
-                                                onClick={(e) => e.stopPropagation()} // Evita propagación al div padre
-                                            />
-                                            <label 
-                                                htmlFor={`cover-upload-${library.id}`}
-                                                className="upload-image-button"
-                                                onClick={(e) => e.stopPropagation()} // Evita propagación
-                                                title="Cambiar imagen de portada"
-                                            >
-                                                <i className="fas fa-camera"></i>
-                                            </label>
-                                        </div>
                                         <div className="library-info">
-                                            <h3>{library.name}</h3>
+                                            <EditableTitle
+                                                title={library.name}
+                                                onSave={(newName) => handleUpdateLibraryName(library.id, newName)}
+                                                className="library-title"
+                                            />
                                             <p>{library.description || 'Sin descripción'}</p>
                                             <div className="library-stats">
-                                                <small>PDFs: {library.pdf_count || 0}</small>
-                                                <small>Creada: {new Date(library.created_at).toLocaleDateString()}</small>
+                                                <small><i className="fas fa-file-pdf"></i> {library.pdf_count || 0} PDFs</small>
+                                                <small><i className="fas fa-calendar"></i> {new Date(library.created_at).toLocaleDateString()}</small>
                                             </div>
                                         </div>
+                                        
+                                        {/* Indicador de drop */}
+                                        <div 
+                                            className="drop-indicator"
+                                            onClick={(e) => handleDropAreaClick(e, library.id)}
+                                            style={{ cursor: 'pointer' }}
+                                        >
+                                            <span>
+                                                <i className="fas fa-file-upload"></i>
+                                                {' '}Suelta o haz clic para añadir PDF
+                                            </span>
+                                        </div>
+                                        
                                         <div className="library-expand-icon">
                                             <i className={`fas fa-chevron-${expandedLibrary === library.id ? 'up' : 'down'}`}></i>
                                         </div>

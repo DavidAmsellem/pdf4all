@@ -21,16 +21,7 @@ const Settings = () => {
         <div className="settings-container animate-fade-in">
             <h2><i className="fas fa-cog"></i> Ajustes</h2>
             <div className="settings-grid">
-                <div className="settings-card">
-                    <h3>Apariencia</h3>
-                    <div className="setting-item">
-                        <label>Tema</label>
-                        <select defaultValue="light">
-                            <option value="light">Claro</option>
-                            <option value="dark">Oscuro</option>
-                        </select>
-                    </div>
-                </div>
+                
                 <div className="settings-card">
                     <h3>Almacenamiento</h3>
                     <div className="setting-item">
@@ -43,10 +34,7 @@ const Settings = () => {
                         </button>
                     </div>
                 </div>
-                <div className="settings-card full-width">
-                    <h3>Estado de Firmas</h3>
-                    <EmailStatusList />
-                </div>
+             
             </div>
         </div>
     );

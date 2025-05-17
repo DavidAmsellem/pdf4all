@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { toast } from 'react-toastify';
 import PDFPreloader from './PDFPreloader';
 import '../styles/components/CacheStatus.css';
@@ -7,6 +7,10 @@ const CacheStatus = () => {
     const [stats, setStats] = useState(null);
     const [loading, setLoading] = useState(false);
     const [key, setKey] = useState(0); // Añadimos una key para forzar el re-render
+    const [progress, setProgress] = useState(0);
+    const [showProgress, setShowProgress] = useState(false);
+    const progressTimer = useRef(null);
+    const finalizeTimer = useRef(null);
 
     const loadStats = async () => {
         try {
@@ -44,9 +48,61 @@ const CacheStatus = () => {
         // El loading se desactivará cuando termine la precarga
     };
 
+    const finalizarProgreso = () => {
+        // Asegurar que llegue al 100%
+        setProgress(100);
+        // Esperar un momento para mostrar el 100%
+        finalizeTimer.current = setTimeout(() => {
+            setShowProgress(false);
+            setProgress(0);
+            setLoading(false);
+        }, 1000);
+    };
+
+    const handlePreloaderFinish = () => {
+        finalizarProgreso();
+        loadStats();
+    };
+
     useEffect(() => {
         loadStats();
-    }, []);
+    }, []);    useEffect(() => {
+        if (loading) {
+            setShowProgress(true);
+            setProgress(0);
+            
+            // Incremento más suave del progreso
+            progressTimer.current = setInterval(() => {
+                setProgress(prev => {
+                    if (prev >= 90) {
+                        clearInterval(progressTimer.current);
+                        return 90; // Se mantiene en 90% hasta que termine la carga
+                    }
+                    return prev + 2; // Incremento más rápido
+                });
+            }, 50);
+
+            // Asegurar que llegue al 100% después de un tiempo máximo
+            finalizeTimer.current = setTimeout(() => {
+                if (loading) { // Si aún está cargando después del tiempo máximo
+                    finalizarProgreso();
+                }
+            }, 5000); // Tiempo máximo de espera: 5 segundos
+
+            return () => {
+                if (progressTimer.current) clearInterval(progressTimer.current);
+                if (finalizeTimer.current) clearTimeout(finalizeTimer.current);
+            };
+        } else {
+            // Limpiar el timer y ocultar la barra después de un breve retraso
+            const hideTimer = setTimeout(() => {
+                setShowProgress(false);
+                setProgress(0);
+            }, 1000);
+            
+            return () => clearTimeout(hideTimer);
+        }
+    }, [loading]);
 
     if (!stats) return null;
 
@@ -57,8 +113,13 @@ const CacheStatus = () => {
 
     return (
         <div className="cache-status">
-            {/* Añadimos el PDFPreloader con key */}
-            <PDFPreloader key={key} onFinish={() => setLoading(false)} />
+            <div className={`cache-progress ${showProgress ? 'visible' : ''}`}>
+                <div 
+                    className="progress-bar" 
+                    style={{ width: `${progress}%` }}
+                />
+            </div>
+            <PDFPreloader key={key} onFinish={handlePreloaderFinish} />
             
             <div className="cache-info">
                 <h3>Estado del Caché</h3>
@@ -73,6 +134,7 @@ const CacheStatus = () => {
                     </div>
                 </div>
             </div>
+
             <div className="cache-actions">
                 <button 
                     onClick={handleRefreshCache}

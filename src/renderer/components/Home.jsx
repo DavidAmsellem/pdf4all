@@ -59,7 +59,7 @@ const Home = () => {
                     </div>
                     {stats?.lastUpdated && (
                         <div className="stat-card">
-                            <i className="fas fa-clock"></i>
+                         
                             <div className="stat-info">
                                 <h3>Último PDF Actualizado</h3>
                                 <p>{stats.lastUpdated.title}</p>

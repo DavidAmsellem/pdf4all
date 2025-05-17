@@ -199,7 +199,7 @@
 
 /* Estilos del icono según el tema */
 [data-theme='light'] .stat-card i {
-  color: var(--bg-primary); /* Color oscuro en modo claro */
+  color: var(--text-primary); /* Color oscuro en modo claro */
 }
 
 [data-theme='dark'] .stat-card i {
@@ -278,18 +278,18 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent); /* Degradado para el brillo */
+  
   transform: translateX(-100%); /* Inicialmente fuera de la vista a la izquierda */
   transition: transform 0.5s; /* Transición para el movimiento del brillo */
 }
 
 .library-card:hover::before {
-  transform: translateX(100%); /* Mueve el brillo a través de la tarjeta */
+
 }
 
 /* Efecto hover general para la tarjeta de biblioteca (complementa el brillo) */
 .library-card:hover {
-  transform: translateY(-5px) scale(1.02); /* Mover y escalar ligeramente */
+ 
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1); /* Sombra más pronunciada */
 }
 
@@ -305,11 +305,61 @@
   padding: 1.5rem; /* Espaciado interno (ajustar si .library-card ya tiene padding) */
   cursor: pointer; /* Cursor de mano */
   transition: background-color 0.2s ease; /* Transición para el color de fondo */
+  position: relative; /* Para el indicador de drop */
+  border-radius: 8px;
+  cursor: pointer;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.3s ease;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
 }
 
 .library-header-card:hover {
-  background-color: rgba(255, 255, 255, 0.05); /* Color de fondo en hover (sutil si la tarjeta ya es semitransparente) */
-  /* background-color: var(--background-alt); */ /* Alternativa de la primera definición de :hover */
+  background-color: var(--bg-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+}
+
+/* Quitar efectos de blur/filtros */
+.library-header-card.drag-over {
+  background-color: var(--bg-hover);
+  border: 2px dashed var(--primary-color);
+}
+
+/* Simplificar el indicador de drop */
+.drop-indicator {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  pointer-events: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.drop-indicator:hover {
+  background: rgba(var(--primary-color-rgb), 0.1);
+}
+
+.drop-indicator span {
+  background: var(--primary-color);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  user-select: none; /* Prevenir selección de texto */
 }
 
 /* Portada de la biblioteca (imagen o placeholder) */
@@ -416,101 +466,85 @@
 
 /* Información de la biblioteca (nombre, descripción, estadísticas) */
 .library-info {
-  padding: 1.2rem; /* Espaciado interno */
-  /* flex: 1; */ /* Si .library-header-card es flex, esto haría que ocupe el espacio restante */
+  padding: 1.25rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.3s ease;
 }
 
-.library-info h3 {
-  margin: 0 0 0.5rem 0; /* Margen inferior para el título */
-  color: var(--text-primary); /* Color del título */
-  font-size: 1.2rem; /* Tamaño de fuente del título */
+.library-info:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+}
+
+.library-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+  transition: color 0.3s ease;
 }
 
 .library-info p {
-  margin: 0; /* Sin margen para la descripción */
-  color: var(--text-secondary); /* Color de la descripción */
-  font-size: 0.9rem; /* Tamaño de fuente de la descripción */
-  line-height: 1.4; /* Altura de línea */
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  line-height: 1.5;
+  margin: 0.75rem 0;
+  opacity: 0.85;
 }
 
-/* Estadísticas dentro de la tarjeta de biblioteca (ej. número de PDFs, fecha) */
 .library-stats {
-  display: flex; /* Layout flexible */
-  justify-content: space-between; /* Espacio entre elementos de estadísticas */
-  padding: 0.5rem 1.2rem; /* Espaciado (puede ser redundante si .library-info ya tiene padding) */
-  background: var(--bg-primary); /* Color de fondo */
-  border-top: 1px solid var(--border-color); /* Línea divisoria superior */
+  display: flex;
+  gap: 1.5rem;
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .library-stats small {
-  color: var(--text-secondary); /* Color del texto de estadísticas */
-  font-size: 0.8rem; /* Tamaño de fuente */
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
 }
 
-/* Icono para expandir/contraer el contenido de la biblioteca */
-.library-expand-icon {
-  margin-left: auto; /* Empuja el icono a la derecha */
-  padding: 0 1rem; /* Espaciado horizontal */
-  color: var(--text-secondary); /* Color del icono */
-  transition: transform 0.3s ease; /* Transición para la rotación */
+.library-stats small i {
+  color: var(--primary-color);
+  font-size: 0.9rem;
 }
 
-.library-expand-icon i {
-  font-size: 1.2rem; /* Tamaño del icono (chevron) */
-  transition: transform 0.3s ease; /* Transición para la rotación del icono interno si es diferente */
+/* Ajustes para modo claro */
+[data-theme="light"] .library-info {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
-/* Rotación del icono cuando la biblioteca está expandida */
-.library-header-card[aria-expanded="true"] .library-expand-icon i { /* Más específico para el icono interno */
-  transform: rotate(180deg);
-}
-/* .library-header-card[aria-expanded="true"] .library-expand-icon { // Menos específico, podría rotar el contenedor del icono
-  transform: rotate(180deg);
-} */
-
-
-/* Contenido desplegable de la biblioteca (lista de PDFs) */
-/* Definición 1 de .library-content */
-.library-content {
-  max-height: 0; /* Inicialmente colapsado */
-  opacity: 0; /* Inicialmente invisible */
-  overflow: hidden; /* Oculta el contenido que excede */
-  transition: all 0.3s ease-out; /* Transición suave para todas las propiedades */
-  background: var(--background-alt); /* Color de fondo */
-  pointer-events: none; /* Deshabilita interacciones cuando está colapsado */
-  visibility: hidden; /* Oculta completamente (mejor para accesibilidad que display:none con transiciones) */
+[data-theme="light"] .library-stats {
+  border-top-color: rgba(0, 0, 0, 0.1);
 }
 
-.library-content.expanded {
-  max-height: 2000px; /* Altura máxima suficientemente grande para el contenido */
-  opacity: 1; /* Totalmente visible */
-  visibility: visible; /* Hacer visible */
-  pointer-events: auto; /* Habilitar interacciones */
-  padding: 1rem; /* Espaciado interno */
-  border-top: 1px solid var(--border-color); /* Línea divisoria superior */
+[data-theme="light"] .library-info:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
 }
 
-/* Definición 2 de .library-content (con transición de 'height') */
-/* Esta definición es más específica para la animación de altura. */
-.library-content { /* Segunda definición */
-  height: 0; /* Colapsado usando height */
-  opacity: 0;
-  overflow: hidden;
-  transition: height 0.3s ease-out, opacity 0.3s ease-out; /* Transiciones separadas */
-  background: var(--background-alt);
-  pointer-events: none;
-  visibility: hidden;
+/* Animación suave al cargar */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-.library-content.expanded { /* Segunda definición */
-  height: auto; /* Altura automática según el contenido */
-  opacity: 1;
-  visibility: visible;
-  pointer-events: auto;
-  padding: 1.5rem; /* Padding diferente */
-  border-top: 1px solid var(--border-color); /* Línea divisoria superior */
+.library-info {
+  animation: fadeInUp 0.5s ease-out forwards;
 }
-
 
 /* ==========================================================================
    5. LISTA/GRID DE PDFs (Dentro de una Biblioteca Expandida)
@@ -1093,7 +1127,7 @@
 }
 
 .titlebar-buttons {
-  -webkit-app-region: no-drag; /* Asegura que los botones sean clickeables y no arrastren la ventana */
+  -webkit-app-region: no-drag; /* Asegura que los botones sean clickeables y no arrastran la ventana */
   display: flex;
   gap: 0.5rem; /* Espacio entre botones de la barra de título */
 }
@@ -1245,5 +1279,41 @@
 }
 
 /* ==========================================================================
-   FIN DEL ARCHIVO CSS
+   FIN DEL ARCHIVO CSSddd
    ========================================================================== */
+
+/* Ajustes para el despliegue */
+.library-content {
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition: all 0.3s ease-out;
+    margin-top: 0.5rem;
+    border-radius: 0 0 12px 12px;
+    background: var(--surface-color);
+}
+
+.library-content.expanded {
+    max-height: 2000px;
+    opacity: 1;
+    padding: 1.25rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="light"] .library-content.expanded {
+    border-color: rgba(0, 0, 0, 0.1);
+}
+
+/* Ajuste del icono de expansión */
+.library-expand-icon {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.3s ease;
+}
+
+.library-header-card.expanded .library-expand-icon i {
+    transform: rotate(180deg);
+}
