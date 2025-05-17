@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { toast } from 'react-toastify';
 import YouSignWizard from './YouSignWizard';
-import SignatureStatus from './SignatureStatus'; // Asegúrate de que la ruta sea correcta
-import '../styles/YouSignButton.css'; // Asegúrate de que la ruta sea correcta
+import SignatureStatus from '../SignatureStatus';
+import '../../styles/sign/YouSignButton.css';// Asegúrate de que la ruta sea correcta
 
 // Componente funcional que recibe pdfId y title como props
 const YouSignButton = ({ pdfId, title }) => {

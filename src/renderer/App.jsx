@@ -11,7 +11,7 @@ import Auth from './components/Auth';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import PDFPreloader from './components/PDFPreloader';
-import DocumentSigningLog from './components/DocumentSigningLog';
+import DocumentSigningLog from './components/sign/DocumentSigningLog';
 
 function App() {
     const [currentView, setCurrentView] = useState('home');

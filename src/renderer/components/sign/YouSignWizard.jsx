@@ -1,6 +1,6 @@
 import React from 'react';
 import Modal from 'react-modal';
-import '../styles/YouSignWizard.css';
+import '../../styles/sign/YouSignWizard.css';
 
 const YouSignWizard = ({ isOpen, onClose, onSubmit, title, loading }) => {
   return (

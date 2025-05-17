@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
-import { supabase } from '../../supabase/client';
-import '../styles/EmailStatusList.css';
+import React, { useEffect, useState } from "react";
+import { supabase } from "../../../supabase/client";
+import "../../styles/sign/EmailStatusList.css";
 
 const EmailStatusList = () => {
     const [signatureProcedures, setSignatureProcedures] = useState({});

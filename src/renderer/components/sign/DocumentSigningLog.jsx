@@ -1,6 +1,6 @@
 import React from 'react';
 import EmailStatusList from './EmailStatusList';
-import '../styles/DocumentSigningLog.css';
+import '../../styles/sign/DocumentSigningLog.css';
 
 const DocumentSigningLog = () => {
     return (
