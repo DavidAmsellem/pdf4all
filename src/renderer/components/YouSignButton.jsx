@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { toast } from 'react-toastify';
 import YouSignWizard from './YouSignWizard';
+import SignatureStatus from './SignatureStatus'; // Asegúrate de que la ruta sea correcta
 import '../styles/YouSignButton.css'; // Asegúrate de que la ruta sea correcta
 
 // Componente funcional que recibe pdfId y title como props
@@ -50,16 +51,21 @@ const YouSignButton = ({ pdfId, title }) => {
         }
     };
 
+    // Función para manejar clic en el botón de firmar
+    const handleSignClick = () => {
+        setShowWizard(true);
+    };
+
     return (
-        // Contenedor principal
-        <>
+        <div>
             {/* Botón para abrir el wizard */}
             <button
-                onClick={() => setShowWizard(true)}
-                className="btn-action"
+                onClick={handleSignClick}
+                disabled={loading}
+                className="yousign-button"
                 title="Firmar con YouSign"
             >
-                <i className="fas fa-signature"></i> YouSign
+                {loading ? 'Iniciando firma...' : 'Firmar con YouSign'}
             </button>
             
             {/* Wizard para firma con YouSign */}
@@ -70,7 +76,10 @@ const YouSignButton = ({ pdfId, title }) => {
                 title={title}
                 loading={loading}
             />
-        </>
+            
+            {/* Componente para mostrar el estado de la firma */}
+            <SignatureStatus pdfId={pdfId} />
+        </div>
     );
 };
 
