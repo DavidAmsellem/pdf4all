@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from 'react';
-import { supabase } from '../supabase/client';
+import React, { useState } from 'react';
 import { useAuth, AuthProvider } from '../context/AuthContext';
 import { ThemeProvider } from '../context/ThemeContext';
 import './styles/App.css';
@@ -14,15 +13,11 @@ import 'react-toastify/dist/ReactToastify.css';
 import PDFPreloader from './components/PDFPreloader';
 import DocumentSigningLog from './components/DocumentSigningLog';
 
-
-
 function App() {
     const [currentView, setCurrentView] = useState('home');
     const { user } = useAuth();
     const [darkMode, setDarkMode] = useState(false);
 
-    // Cuando user sea null (después del logout), 
-    // automáticamente se mostrará el componente Auth
     if (!user) {
         return <Auth />;
     }
