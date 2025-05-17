@@ -47,39 +47,71 @@
 /* Título principal de la biblioteca */
 .library-header h1 {
   font-size: 2.5rem; /* Tamaño de fuente grande */
-  background: linear-gradient(45deg, var(--primary-color), #6366f1); /* Fondo con degradado para el texto */
-  -webkit-background-clip: text; /* Recorta el fondo al área del texto (para WebKit) */
-  background-clip: text; /* Recorta el fondo al área del texto (estándar) */
-  color: transparent; /* Hace el color del texto transparente para mostrar el fondo */
+  transition: color 0.3s ease; /* Transición suave para el cambio de color */
   animation: titleGlow 2s ease-in-out infinite alternate; /* Animación de brillo sutil */
+}
+
+/* Color del título según el tema */
+[data-theme='light'] .library-header h1 {
+  color: rgb(27, 24, 24); /* Negro en modo claro */
+}
+
+[data-theme='dark'] .library-header h1 {
+  color: rgb(255, 255, 255); /* Blanco en modo oscuro */
 }
 
 /* Contenedor para los botones en la cabecera */
 .header-buttons {
   display: flex; /* Layout flexible */
   gap: 1rem; /* Espacio entre botones */
+  align-items: baseline; /* Alinea los elementos por su línea base */
 }
 
 /* Estilo base para los botones de "Crear Biblioteca" y "Subir PDF" en la cabecera */
 .create-library-button,
-.upload-button { /* Esta clase .upload-button se usa también para el label del input file más abajo */
+.upload-button {
   padding: 0.75rem 1.5rem; /* Espaciado interno */
+  height: 48px; /* Altura fija para consistencia */
+  min-width: 160px; /* Ancho mínimo para asegurar consistencia */
   border: none; /* Sin borde por defecto */
   border-radius: 12px; /* Bordes redondeados */
   font-weight: 600; /* Peso de la fuente */
   cursor: pointer; /* Cursor de mano */
-  display: flex; /* Para alinear icono y texto */
+  display: inline-flex; /* Para alinear icono y texto */
   align-items: center; /* Alineación vertical centrada */
-  min-width: 160px; /* Ancho mínimo fijo para ambos botones */
   justify-content: center; /* Centrar contenido horizontalmente */
-  margin: 0; /* Eliminar márgenes externos */
-  white-space: nowrap; /* Evitar que el texto se rompa en múltiples líneas */
   gap: 0.5rem; /* Espacio entre icono y texto */
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); /* Transición suave para efectos hover */
-  background: rgba(255, 255, 255, 0.1); /* Fondo semitransparente (efecto cristal) */
+  background: rgba(44, 44, 44, 0.1); /* Fondo semitransparente (efecto cristal) */
   backdrop-filter: blur(10px); /* Desenfoque del fondo (efecto cristal) */
-  border: 1px solid rgba(255, 255, 255, 0.1); /* Borde sutil para el efecto cristal */
-  color: rgb(27, 24, 24); /* Color del texto por defecto para estos botones */
+  border: 1px solid rgba(63, 62, 62, 0.1); /* Borde sutil para el efecto cristal */
+  font-size: 0.875rem; /* Tamaño de fuente ajustado */
+  line-height: 1; /* Altura de línea ajustada */
+  white-space: nowrap; /* Evitar que el texto se divida en múltiples líneas */
+}
+
+/* Estilos para modo claro */
+[data-theme='light'] .create-library-button,
+[data-theme='light'] .upload-button {
+  background: rgba(0, 0, 0, 0.15); /* Fondo más oscuro en modo claro */
+  color: black;
+  border: 1px solid rgba(0, 0, 0, 0.1); /* Borde ligeramente visible */
+}
+
+[data-theme='light'] .create-library-button i,
+[data-theme='light'] .upload-button i {
+  color: black;
+}
+
+/* Estilos para modo oscuro */
+[data-theme='dark'] .create-library-button,
+[data-theme='dark'] .upload-button {
+  color: rgb(255, 255, 255);
+}
+
+[data-theme='dark'] .create-library-button i,
+[data-theme='dark'] .upload-button i {
+  color: rgb(207, 186, 186);
 }
 
 /* Efecto hover para los botones de la cabecera */
@@ -88,11 +120,18 @@
   transform: translateY(-2px); /* Mover ligeramente hacia arriba */
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1); /* Sombra para dar profundidad */
   background: var(--primary-color); /* Cambio de color de fondo */
-  color: rgb(59, 46, 46); /* Asegura que el texto siga siendo blanco o el deseado */
+  color: rgb(0, 0, 0); /* Color del texto en hover */
+}
+
+[data-theme='light'] .create-library-button:hover,
+[data-theme='light'] .upload-button:hover {
+  background: rgba(0, 0, 0, 0.25); /* Fondo aún más oscuro en hover para modo claro */
+  color: var(--bg-primary);
 }
 
 /* Contenedor específico para el botón de subida de PDF (si se necesita diferenciar del .upload-button genérico) */
 .pdf-upload-button {
+  height: 48px; /* Altura fija */
   margin: 1rem 0; /* Margen vertical */
   text-align: right; /* Alineación del contenido (si lo tuviera además del label) */
   /* Este contenedor parece usarse para el input file oculto y su label estilizado como .upload-button */
@@ -111,6 +150,23 @@
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Sombra diferente en hover */
 }
 
+/* Estilos para modo claro */
+[data-theme='light'] .upload-button {
+  color: rgb(0, 0, 0);
+}
+
+[data-theme='light'] .upload-button i {
+  color: black;
+}
+
+/* Estilos para modo oscuro */
+[data-theme='dark'] .upload-button {
+  color: rgb(255, 255, 255);
+}
+
+[data-theme='dark'] .upload-button i {
+  color: white;
+}
 
 /* ==========================================================================
    3. PANEL DE ESTADÍSTICAS
@@ -141,6 +197,15 @@
   transition: all 0.3s ease; /* Transición suave para efectos */
 }
 
+/* Estilos del icono según el tema */
+[data-theme='light'] .stat-card i {
+  color: var(--bg-primary); /* Color oscuro en modo claro */
+}
+
+[data-theme='dark'] .stat-card i {
+  color: white; /* Color blanco en modo oscuro */
+}
+
 .stat-card:hover {
   transform: translateY(-2px); /* Mover ligeramente hacia arriba en hover */
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1); /* Sombra para dar profundidad */
@@ -149,7 +214,7 @@
 /* Icono dentro de la tarjeta de estadística */
 .stat-card i {
   font-size: 2.5rem; /* Tamaño del icono */
-  color: var(--primary-color); /* Color del icono */
+  color: var(--text-primary); /* Color del icono basado en el tema */
   animation: float 3s ease-in-out infinite; /* Animación de flotación */
 }
 
@@ -508,6 +573,7 @@
 /* Definición 1 de .pdf-card */
 .pdf-card {
   position: relative; /* Para posicionar elementos hijos (ej. .pdf-actions) */
+  width: 100%;
   background: var(--surface-color); /* Color de fondo */
   border-radius: 12px; /* Bordes redondeados */
   overflow: hidden; /* Oculta contenido que sobresale */
@@ -626,67 +692,83 @@
 }
 
 /* Acciones para el PDF (botones de descargar, abrir, eliminar, etc.) */
-/* Definición 1 de .pdf-actions */
 .pdf-actions {
-  position: absolute; /* Posicionamiento absoluto (generalmente dentro de .pdf-card o .pdf-cover) */
-  top: 0.5rem; /* Distancia desde arriba */
-  right: 0.5rem; /* Distancia desde la derecha */
-  display: flex; /* Layout flexible para los botones */
-  gap: 0.5rem; /* Espacio entre botones */
-  opacity: 0; /* Oculto por defecto, aparece en hover */
-  transition: opacity 0.2s ease, transform 0.3s ease; /* Transiciones suaves */
-  z-index: 10; /* Asegura que esté por encima de otros elementos */
-  /* transform: translateY(-10px); */ /* Efecto de entrada alternativo */
-  /* margin-top: 0.5rem; */ /* Si no es posicionado absolutamente */
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  padding: 1rem;
+  gap: 0.75rem;
+  opacity: 0;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.5) 0%, transparent 50%);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 20;
+  pointer-events: none;
 }
 
-.pdf-card:hover .pdf-actions { /* Mostrar acciones al hacer hover en la tarjeta PDF */
-  opacity: 1; /* Hacer visible */
-  transform: translateY(0); /* Volver a su posición (si se usa el efecto de entrada) */
-}
-/* .pdf-item:hover .pdf-actions { // Alternativa si se usa .pdf-item
+.pdf-card:hover .pdf-actions {
   opacity: 1;
-} */
+  pointer-events: auto;
+}
 
 
 /* Botón de acción individual para PDF */
-/* Definición 1 de .btn-action */
 .btn-action {
-  width: 32px; /* Ancho */
-  height: 32px; /* Alto */
-  border-radius: 50%; /* Botón circular */
-  border: none; /* Sin borde */
-  background: rgba(0, 0, 0, 0.7); /* Fondo semitransparente oscuro */
-  color: white; /* Color del icono */
-  cursor: pointer; /* Cursor de mano */
-  display: flex; /* Para centrar el icono */
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  border: none;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  cursor: pointer;
+  display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s ease; /* Transición suave */
-  backdrop-filter: blur(4px); /* Efecto cristal */
-  /* Las siguientes propiedades son de una definición diferente, pueden necesitar fusionarse o ser contextuales */
-  /* padding: 0.4rem 0.6rem; */
-  /* border-radius: var(--radius-sm); */ /* Diferente border-radius */
-  /* background: var(--surface-color); */ /* Diferente fondo */
-  /* color: var(--text-primary); */ /* Diferente color de texto/icono */
-  /* gap: 0.25rem; */
-  /* font-size: 0.8rem; */ /* Si el botón contiene texto además de icono */
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  font-size: 1rem;
+}
+
+/* Estilos para modo claro */
+[data-theme='light'] .btn-action {
+  background: rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  color: rgb(27, 24, 24);
 }
 
 .btn-action:hover {
-  background: var(--primary-color); /* Cambio de color de fondo en hover */
-  transform: scale(1.1); /* Escalar ligeramente */
-  /* background: var(--background-hover); */ /* Alternativa de fondo en hover */
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  background: var(--primary-color);
+  color: white;
 }
 
-/* Estilo específico para el botón de eliminar en hover */
-.btn-action.delete:hover { /* Asumiendo que el botón de eliminar tiene la clase 'delete' */
-  background: var(--error-color); /* Color de error en hover */
-}
-/* .btn-delete:hover { // Alternativa si .btn-delete es una clase separada
-  background: var(--danger-color);
+[data-theme='light'] .btn-action:hover {
+  background: rgba(0, 0, 0, 0.25);
   color: white;
-} */
+}
+
+/* Estilo específico para botones de acción */
+.btn-action.delete:hover {
+  background: rgb(220, 38, 38);
+  color: white;
+  border-color: transparent;
+}
+
+.btn-action.open:hover {
+  background: rgb(37, 99, 235);
+  color: white;
+  border-color: transparent;
+}
+
+.btn-action:active {
+  transform: translateY(0);
+}
 
 
 /* Estilos para un elemento de PDF en una lista (alternativa a .pdf-card) */
@@ -776,12 +858,18 @@
   max-width: 600px; /* Ancho máximo */
   max-height: 90vh; /* Altura máxima responsiva */
   overflow-y: auto; /* Scroll vertical si el contenido excede */
-  background: var(--bg-primary); /* Color de fondo del modal */
-  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2); /* Sombra pronunciada */
+  background: var(--surface-color); /* Color de fondo del modal */
+  color: var(--text-primary);
+  box-shadow: var(--shadow-lg);
   border: 1px solid var(--border-color); /* Borde sutil */
-  border-radius: 20px; /* Bordes redondeados */
+  border-radius: var(--border-radius-lg); /* Bordes redondeados */
   padding: 2rem; /* Espaciado interno */
   animation: slideUp 0.3s ease-out; /* Animación de aparición */
+}
+
+[data-theme='dark'] .modal-content {
+  background: var(--bg-secondary);
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4);
 }
 
 /* Botón para cerrar el modal */
@@ -791,10 +879,10 @@
   right: 1rem;
   width: 32px;
   height: 32px;
-  background: #f3f4f6; /* Color de fondo (puede necesitar ajuste a variables CSS) */
-  border: 1px solid #e5e7eb; /* Borde (puede necesitar ajuste) */
+  background: var(--surface-color);
+  border: 1px solid var(--border-color);
   border-radius: 50%; /* Botón circular */
-  color: #6b7280; /* Color del icono (puede necesitar ajuste) */
+  color: var(--text-secondary);
   cursor: pointer;
   font-size: 1.2rem; /* Tamaño del icono de cerrar */
   display: flex;
@@ -805,67 +893,57 @@
 }
 
 .close-button:hover {
-  background: #e5e7eb; /* Cambio de fondo en hover */
-  color: #1f2937; /* Cambio de color del icono */
-  transform: rotate(90deg); /* Rotación del icono en hover */
-  border-color: #d1d5db; /* Cambio de color del borde */
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  transform: scale(1.1);
 }
 
-.close-button:active {
-  transform: rotate(90deg) scale(0.95); /* Efecto de presionado */
-}
-
-/* Estilos para formularios dentro de los modales (ej. crear biblioteca, asignar PDF) */
-.library-form { /* Asumiendo que esta clase se usa en los formularios de los modales */
-  /* Espaciado o estilos específicos del formulario si son necesarios */
-}
-
-.library-form h2 { /* Título del formulario */
-  margin-bottom: 1.5rem; /* Espacio debajo del título */
-  text-align: center; /* Centrar título */
-  color: var(--text-primary); /* Color del texto */
-}
-
-/* Grupo de formulario (label + input/select/textarea) */
-.form-group {
-  margin-bottom: 1.5rem; /* Espacio entre grupos de formulario */
-}
-
-.form-group label {
-  display: block; /* Label en su propia línea */
-  margin-bottom: 0.5rem; /* Espacio debajo del label */
-  font-weight: 500; /* Peso de la fuente del label */
+[data-theme='dark'] .close-button {
+  background: var(--bg-primary);
   color: var(--text-secondary);
 }
 
-.form-group input[type="text"],
-.form-group textarea,
-.form-group select { /* Estilos comunes para inputs, textarea y select */
-  width: 100%; /* Ancho completo */
-  padding: 0.75rem; /* Espaciado interno */
-  border: 1px solid var(--border-color); /* Borde */
-  border-radius: 8px; /* Bordes redondeados */
+[data-theme='dark'] .close-button:hover {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+/* Estilos para el contenido dentro del modal */
+.modal-content h2 {
+  color: var(--text-primary);
+  margin-bottom: 1.5rem;
+  font-size: 1.5rem;
+}
+
+.modal-content p {
+  color: var(--text-secondary);
+  margin-bottom: 1rem;
+  line-height: 1.6;
+}
+
+.modal-content input,
+.modal-content textarea {
+  width: 100%;
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-md); /* Bordes redondeados */
   background: var(--bg-primary); /* Color de fondo (puede necesitar ser más claro que el modal) */
   color: var(--text-primary); /* Color del texto */
-  font-size: 1rem; /* Tamaño de fuente */
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition: all 0.2s ease;
 }
 
-.form-group input[type="text"]:focus,
-.form-group textarea:focus,
-.form-group select:focus { /* Estilos al enfocar */
-  outline: none; /* Quitar outline por defecto */
-  border-color: var(--primary-color); /* Cambiar color del borde */
-  box-shadow: 0 0 0 2px rgba(var(--primary-color-rgb), 0.1); /* Sombra sutil (asumiendo --primary-color-rgb) */
+.modal-content input:focus,
+.modal-content textarea:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px var(--primary-color-light);
 }
 
-.form-group textarea {
-  resize: vertical; /* Permitir redimensionar solo verticalmente */
-  min-height: 80px; /* Altura mínima para textarea */
-}
-
-.form-group select {
-  cursor: pointer; /* Cursor de mano para select */
+[data-theme='dark'] .modal-content input,
+[data-theme='dark'] .modal-content textarea {
+  background: var(--bg-primary);
+  border-color: var(--border-color);
 }
 
 /* Mensaje de error dentro del formulario */
@@ -1065,10 +1143,24 @@
 
 @keyframes titleGlow { /* Animación de brillo para el título principal */
   0% {
-    text-shadow: 0 0 10px rgba(var(--primary-color-rgb), 0.2); /* Sombra inicial (asumiendo --primary-color-rgb) */
+    text-shadow: 0 0 10px rgba(0, 0, 0, 0.1); /* Sombra inicial sutil */
   }
   100% {
-    text-shadow: 0 0 20px rgba(var(--primary-color-rgb), 0.4); /* Sombra final más intensa */
+    text-shadow: 0 0 20px rgba(0, 0, 0, 0.2); /* Sombra final más intensa */
+  }
+}
+
+/* Animación de brillo para modo oscuro */
+[data-theme='dark'] .library-header h1 {
+  animation: titleGlowDark 2s ease-in-out infinite alternate;
+}
+
+@keyframes titleGlowDark {
+  0% {
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+  }
+  100% {
+    text-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
   }
 }
 

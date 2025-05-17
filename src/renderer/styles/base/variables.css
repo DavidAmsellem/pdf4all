@@ -42,8 +42,8 @@
 }
 
 [data-theme='dark'] {
-  --bg-primary: #1a1b1e;
-  --bg-secondary: #2a2b2e;
+  --bg-primary: #000000;
+  --bg-secondary: #1a1b1e;
   --text-primary: #ffffff;
   --text-secondary: #a0aec0;
   --primary-color: #818cf8;

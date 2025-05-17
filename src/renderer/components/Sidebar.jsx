@@ -1,7 +1,7 @@
 import React from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
-import '../styles/Sidebar.css';
+import '../styles/components/Sidebar.css';
 
 const Sidebar = ({ onNavigate, currentView }) => {
   const { signOut } = useAuth();

@@ -65,6 +65,7 @@ const YouSignButton = ({ pdfId, title }) => {
                 className="yousign-button"
                 title="Firmar con YouSign"
             >
+                <i className="fas fa-file-signature"></i>
                 {loading ? 'Iniciando firma...' : 'Firmar con YouSign'}
             </button>
             

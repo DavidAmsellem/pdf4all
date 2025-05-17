@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth, AuthProvider } from '../context/AuthContext';
 import { ThemeProvider } from '../context/ThemeContext';
-import './styles/App.css';
+import './styles/base/App.css';
 import Sidebar from './components/Sidebar';
 import TitleBar from './components/TitleBar';
 import Home from './components/Home';

@@ -3,7 +3,7 @@ import { useAuth } from '../../context/AuthContext';
 import { databaseService } from '../../services/databaseService';
 import { toast } from 'react-toastify';
 import CacheStatus from './CacheStatus';
-import './Home.css';
+import '../styles/pages/Home.css';
 
 const Home = () => {
     const { user } = useAuth();

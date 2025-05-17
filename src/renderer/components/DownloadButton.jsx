@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { supabase } from '../../supabase/client';
 import { toast } from 'react-toastify';
-import '../styles/DownloadButton.css';
+import '../styles/components/DownloadButton.css';
 
 const DownloadButton = ({ pdfData }) => {
     const [downloading, setDownloading] = useState(false);

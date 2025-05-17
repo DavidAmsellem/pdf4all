@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import AnimatedSignature from './AnimatedSignature';
-import '../styles/Auth.css';
+import '../styles/pages/Auth.css';
 
 const Auth = () => {
     const [loading, setLoading] = useState(false);

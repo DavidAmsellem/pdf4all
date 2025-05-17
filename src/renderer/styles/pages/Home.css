@@ -34,16 +34,31 @@
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); /* Grid responsive */
   gap: var(--spacing-lg);
   margin-bottom: var(--spacing-xl);
+  background: var(--surface-color);
+  padding: var(--spacing-lg);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--border-color);
+}
+
+[data-theme='dark'] .stats-grid {
+  background: #ffffff;
 }
 
 /* Tarjetas individuales de estadísticas */
 .stat-card {
-  background: var(--surface-color);
+  background: var(--bg-secondary);
   padding: var(--spacing-lg);
   border-radius: var(--border-radius-md);
   box-shadow: var(--shadow-sm);
   text-align: center;
   transition: transform var(--transition-normal);
+  border: 1px solid var(--border-color);
+}
+
+[data-theme='dark'] .stat-card {
+  background: #f8f9fa11;
+  color: #ffffff;
 }
 
 /* Efecto hover en las tarjetas de estadísticas */
@@ -58,11 +73,24 @@
   margin-bottom: var(--spacing-sm);
 }
 
+[data-theme='dark'] .stat-card i {
+  color: #6366f1;
+}
+
 /* Números grandes en las estadísticas */
 .stat-number {
   font-size: 2rem;
   font-weight: bold;
   color: var(--primary-color);
+}
+
+[data-theme='dark'] .stat-number {
+  color: #6366f1;
+}
+
+[data-theme='dark'] .stat-card h3,
+[data-theme='dark'] .stat-card p {
+  color: #ffffff;
 }
 
 /* Sección de acciones rápidas */

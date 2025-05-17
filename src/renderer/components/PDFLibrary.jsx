@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { databaseService } from '../../services/databaseService';
 import { toast } from 'react-toastify';
-import '../styles/PDFLibrary.css';
+import '../styles/pages/PDFLibrary.css';
 import { supabase } from '../../supabase/client';
 import * as pdfjsLib from 'pdfjs-dist';
 import DownloadButton from './DownloadButton';

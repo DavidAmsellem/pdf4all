@@ -1,5 +1,5 @@
 import React from 'react';
-import '../styles/AnimatedSignature.css';
+import '../styles/components/AnimatedSignature.css';
 
 const AnimatedSignature = () => {
     return (

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import PDFPreloader from './PDFPreloader';
-import '../styles/CacheStatus.css';
+import '../styles/components/CacheStatus.css';
 
 const CacheStatus = () => {
     const [stats, setStats] = useState(null);

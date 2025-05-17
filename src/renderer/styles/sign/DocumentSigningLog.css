@@ -12,7 +12,7 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    color: #2c3e50;
+    color: var(--text-primary);
     font-size: 1.5rem;
 }
 
@@ -21,11 +21,12 @@
 }
 
 .signing-log-content {
-    background: white;
+    background: var(--bg-primary);
     border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    box-shadow: var(--shadow-md);
     padding: 20px;
     min-height: calc(100vh - 200px);
+    border: 1px solid var(--border-color);
 }
 
 /* Aseguramos que EmailStatusList se muestre correctamente */

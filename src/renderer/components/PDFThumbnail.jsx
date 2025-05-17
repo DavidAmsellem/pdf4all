@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import './PDFThumbnail.css';
+import '../styles/components/PDFThumbnail.css';
 
 const PDFThumbnail = ({ pdf, onClick }) => {
     const [isLoading, setIsLoading] = useState(true);

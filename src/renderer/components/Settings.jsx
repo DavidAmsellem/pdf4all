@@ -2,7 +2,7 @@ import React from 'react';
 import { toast } from 'react-toastify';
 import EmailStatusList from './sign/EmailStatusList';
 import '../styles/sign/EmailStatusList.css';
-import '../styles/Settings.css';
+import '../styles/pages/Settings.css';
 
 const Settings = () => {
     const handleOpenCache = async () => {
