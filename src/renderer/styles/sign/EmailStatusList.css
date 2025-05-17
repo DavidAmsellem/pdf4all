@@ -1,10 +1,17 @@
 .email-status-list {
+    max-height: calc(100vh - 200px); /* Ajusta según el espacio disponible */
+    overflow-y: auto;
     padding: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
 }
 
 .email-list {
-    display: grid;
+    display: flex;
+    flex-direction: column;
     gap: 15px;
+    overflow-y: auto;
 }
 
 .email-card {
@@ -198,4 +205,31 @@
 
 .download-button i {
     font-size: 1rem;
+}
+
+/* Estilo para el contenedor padre si existe */
+.signing-log-container {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* Estilo para la barra de desplazamiento */
+.email-status-list::-webkit-scrollbar {
+    width: 8px;
+}
+
+.email-status-list::-webkit-scrollbar-track {
+    background: var(--bg-secondary);
+    border-radius: 4px;
+}
+
+.email-status-list::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 4px;
+}
+
+.email-status-list::-webkit-scrollbar-thumb:hover {
+    background: var(--text-secondary);
 }

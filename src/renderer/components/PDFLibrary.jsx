@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { databaseService } from '../../services/databaseService';
 import { toast } from 'react-toastify';
@@ -7,6 +7,7 @@ import { supabase } from '../../supabase/client';
 import * as pdfjsLib from 'pdfjs-dist';
 import DownloadButton from './DownloadButton';
 import YouSignButton from './sign/YouSignButton';
+import LibraryFilter from './LibraryFilter';
 
 // Configuración global para el worker de PDF.js.
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
@@ -29,6 +30,52 @@ const PDFLibrary = () => {
     const [stats, setStats] = useState(null);
     // ID de la biblioteca expandida para mostrar sus PDFs.
     const [expandedLibrary, setExpandedLibrary] = useState(null);
+    const [filterText, setFilterText] = useState('');
+    const [sortOrder, setSortOrder] = useState('name-asc');
+    const [searchType, setSearchType] = useState('all'); // Nuevo estado para el tipo de búsqueda
+
+    const filteredAndSortedLibraries = useMemo(() => {
+        let result = [...libraries];
+        
+        // Aplicar filtro
+        if (filterText) {
+            result = result.filter(lib => {
+                const matchLibrary = (searchType === 'all' || searchType === 'libraries') &&
+                    (lib.name.toLowerCase().includes(filterText.toLowerCase()) ||
+                    lib.description?.toLowerCase().includes(filterText.toLowerCase()));
+                    
+                const matchPDFs = (searchType === 'all' || searchType === 'pdfs') &&
+                    libraryPdfs[lib.id]?.some(pdf => 
+                        pdf.title.toLowerCase().includes(filterText.toLowerCase()) ||
+                        pdf.description?.toLowerCase().includes(filterText.toLowerCase())
+                    );
+                    
+                return matchLibrary || matchPDFs;
+            });
+        }
+        
+        // Aplicar ordenamiento
+        result.sort((a, b) => {
+            switch (sortOrder) {
+                case 'name-asc':
+                    return a.name.localeCompare(b.name);
+                case 'name-desc':
+                    return b.name.localeCompare(a.name);
+                case 'date-new':
+                    return new Date(b.created_at) - new Date(a.created_at);
+                case 'date-old':
+                    return new Date(a.created_at) - new Date(b.created_at);
+                case 'size-large':
+                    return (libraryPdfs[b.id]?.length || 0) - (libraryPdfs[a.id]?.length || 0);
+                case 'size-small':
+                    return (libraryPdfs[a.id]?.length || 0) - (libraryPdfs[b.id]?.length || 0);
+                default:
+                    return 0;
+            }
+        });
+        
+        return result;
+    }, [libraries, filterText, sortOrder, libraryPdfs, searchType]);
 
     /**
      * Carga las bibliotecas del usuario y sus PDFs asociados.
@@ -427,6 +474,16 @@ const PDFLibrary = () => {
                     </div>
                 )}
 
+                {/* Filtro y Ordenamiento */}
+                <LibraryFilter
+                    onFilterChange={setFilterText}
+                    onSortChange={setSortOrder}
+                    onSearchTypeChange={setSearchType}
+                    totalItems={filteredAndSortedLibraries.length}
+                    filterActive={!!filterText}
+                    searchType={searchType}
+                />
+
                 {/* Grid de Bibliotecas */}
                 {isLoading ? (
                     <div className="loading-state">
@@ -445,7 +502,7 @@ const PDFLibrary = () => {
                                 </button>
                             </div>
                         ) : (
-                            libraries.map(library => (
+                            filteredAndSortedLibraries.map(library => (
                                 <div key={library.id} className="library-card animate-scale-in">
                                     <div 
                                         className="library-header-card"

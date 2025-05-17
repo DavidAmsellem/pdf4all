@@ -1,9 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { supabase } from "../../../supabase/client";
 import "../../styles/sign/EmailStatusList.css";
+import EmailStatusSearch from './EmailStatusSearch';
 
 const EmailStatusList = () => {
-    const [signatureProcedures, setSignatureProcedures] = useState({});
+    const [signatureEvents, setSignatureEvents] = useState([]);
+    const [filteredEvents, setFilteredEvents] = useState([]);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [statusFilter, setStatusFilter] = useState('all');
     const [loading, setLoading] = useState(true);
     const [downloading, setDownloading] = useState(false);
 
@@ -76,7 +80,7 @@ const EmailStatusList = () => {
                 return acc;
             }, {});
 
-            setSignatureProcedures(grouped);
+            setSignatureEvents(grouped);
         } catch (error) {
             console.error('Error cargando emails:', error);
         } finally {
@@ -111,7 +115,7 @@ const EmailStatusList = () => {
     const getStatusBadge = (status) => {
         const statusMap = {
             'ongoing': { class: 'status-ongoing', text: 'En Proceso | Ongoing' },
-            'completed': { class: 'status-completed', text: 'Completado | Completed' },
+            'done': { class: 'status-completed', text: 'Completado | Done' }, // Cambiado de 'completed' a 'done'
             'refused': { class: 'status-refused', text: 'Rechazado | Refused' },
             'expired': { class: 'status-expired', text: 'Expirado | Expired' },
             'initiated': { class: 'status-initiated', text: 'Iniciado | Initiated' }
@@ -166,6 +170,48 @@ const EmailStatusList = () => {
         }
     };
 
+    const handleSearch = (term) => {
+        setSearchTerm(term);
+        filterEvents(term, statusFilter);
+    };
+
+    const handleStatusFilter = (status) => {
+        setStatusFilter(status);
+        filterEvents(searchTerm, status);
+    };
+
+    const filterEvents = (term, status) => {
+        let filtered = Object.entries(signatureEvents);
+
+        if (term) {
+            const searchLower = term.toLowerCase();
+            filtered = filtered.filter(([_, procedure]) => 
+                procedure.documentName.toLowerCase().includes(searchLower) ||
+                procedure.signers.some(signer => 
+                    signer.email?.toLowerCase().includes(searchLower) ||
+                    `${signer.firstName} ${signer.lastName}`.toLowerCase().includes(searchLower)
+                )
+            );
+        }
+
+        if (status !== 'all') {
+            filtered = filtered.filter(([_, procedure]) => {
+                // Manejar específicamente el caso de 'completed' en el filtro
+                if (status === 'completed') {
+                    return procedure.currentStatus.toLowerCase() === 'done';
+                }
+                return procedure.currentStatus.toLowerCase() === status.toLowerCase();
+            });
+        }
+
+        const filteredObject = Object.fromEntries(filtered);
+        setFilteredEvents(filteredObject);
+    };
+
+    useEffect(() => {
+        filterEvents(searchTerm, statusFilter);
+    }, [signatureEvents]);
+
     if (loading) {
         return (
             <div className="loading-container">
@@ -177,59 +223,72 @@ const EmailStatusList = () => {
 
     return (
         <div className="email-status-list">
-            {Object.entries(signatureProcedures).map(([procedureId, procedure]) => (
-                <div key={procedureId} className="email-card">
-                    <div className="email-header">
-                        <div className="document-info">
-                            <h4>{procedure.documentName}</h4>
-                            <span className={`status-badge ${getStatusBadge(procedure.currentStatus).class}`}>
-                                {getStatusBadge(procedure.currentStatus).text}
-                            </span>
-                        </div>
-                        <div className="document-actions">
-                            {procedure.currentStatus === 'completed' && (
-                                <button 
-                                    className="download-button"
-                                    onClick={() => downloadSignedDocument(procedureId)}
-                                    disabled={downloading}
-                                >
-                                    <i className="fas fa-download"></i>
-                                    {downloading ? 'Descargando...' : 'Descargar PDF'}
-                                </button>
-                            )}
-                            <span className="email-date">
-                                {formatDate(procedure.events[procedure.events.length - 1]?.created_at)}
-                            </span>
-                        </div>
-                    </div>
-                    <div className="email-details">
-                        <div className="signers-list">
-                            <h5>Firmantes:</h5>
-                            {procedure.signers.map(signer => (
-                                <p key={signer.id} className="signer-info">
-                                    <i className="fas fa-user"></i>
-                                    <div className="signer-details">
-                                        <span className="signer-name">
-                                            {signer.firstName} {signer.lastName}
-                                        </span>
-                                        <span className="signer-email">{signer.email || 'Sin correo'}</span>
-                                        <span className="signer-status">Estado: {signer.status}</span>
-                                    </div>
-                                </p>
-                            ))}
-                        </div>
-                        <div className="events-timeline">
-                            <h5>Historial:</h5>
-                            {procedure.events.map(event => (
-                                <p key={event.id} className="event-info">
-                                    <i className="fas fa-clock"></i>
-                                    <span>{formatDate(event.created_at)}: {getEventName(event.metadata.event_name)}</span>
-                                </p>
-                            ))}
-                        </div>
-                    </div>
+            <EmailStatusSearch 
+                onSearch={handleSearch}
+                onFilterStatus={handleStatusFilter}
+            />
+            
+            {Object.keys(filteredEvents).length === 0 ? (
+                <div className="no-data">
+                    {searchTerm || statusFilter !== 'all' ? 
+                        'No se encontraron resultados' : 
+                        'No hay eventos de firma'}
                 </div>
-            ))}
+            ) : (
+                Object.entries(filteredEvents).map(([procedureId, procedure]) => (
+                    <div key={procedureId} className="email-card">
+                        <div className="email-header">
+                            <div className="document-info">
+                                <h4>{procedure.documentName}</h4>
+                                <span className={`status-badge ${getStatusBadge(procedure.currentStatus).class}`}>
+                                    {getStatusBadge(procedure.currentStatus).text}
+                                </span>
+                            </div>
+                            <div className="document-actions">
+                                {procedure.currentStatus === 'completed' && (
+                                    <button 
+                                        className="download-button"
+                                        onClick={() => downloadSignedDocument(procedureId)}
+                                        disabled={downloading}
+                                    >
+                                        <i className="fas fa-download"></i>
+                                        {downloading ? 'Descargando...' : 'Descargar PDF'}
+                                    </button>
+                                )}
+                                <span className="email-date">
+                                    {formatDate(procedure.events[procedure.events.length - 1]?.created_at)}
+                                </span>
+                            </div>
+                        </div>
+                        <div className="email-details">
+                            <div className="signers-list">
+                                <h5>Firmantes:</h5>
+                                {procedure.signers.map(signer => (
+                                    <p key={signer.id} className="signer-info">
+                                        <i className="fas fa-user"></i>
+                                        <div className="signer-details">
+                                            <span className="signer-name">
+                                                {signer.firstName} {signer.lastName}
+                                            </span>
+                                            <span className="signer-email">{signer.email || 'Sin correo'}</span>
+                                            <span className="signer-status">Estado: {signer.status}</span>
+                                        </div>
+                                    </p>
+                                ))}
+                            </div>
+                            <div className="events-timeline">
+                                <h5>Historial:</h5>
+                                {procedure.events.map(event => (
+                                    <p key={event.id} className="event-info">
+                                        <i className="fas fa-clock"></i>
+                                        <span>{formatDate(event.created_at)}: {getEventName(event.metadata.event_name)}</span>
+                                    </p>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                ))
+            )}
         </div>
     );
 };
