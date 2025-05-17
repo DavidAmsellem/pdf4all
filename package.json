@@ -1,6 +1,6 @@
 {
-  "name": "pdf-biblioteca",
-  "version": "1.0.0",
+  "name": "pdf4all",
+  "version": "2.0.1",
   "description": "Gestor de bibliotecas PDF con cifrado",
   "author": "David Amsellem",
   "main": "src/main/main.js",
