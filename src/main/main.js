@@ -1,10 +1,16 @@
 const { app, BrowserWindow, ipcMain, shell } = require('electron');
 const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '../../.env') });
+
+// Agrega un log para verificar que la API key se está cargando
+console.log('YouSign API Key configurada:', process.env.YOUSIGN_API_KEY ? 'Sí' : 'No');
+
 const fs = require('fs').promises;
 const https = require('https');
 const http = require('http');
 const cacheService = require('../services/cacheService');
 const fetch = require('node-fetch');
+
 // Importar el servicio de YouSign
 const { youSignService } = require('../services/youSignService');
 
@@ -98,7 +104,14 @@ function downloadFile(url, destPath) {
 }
 
 // Inicialización de la aplicación
-app.whenReady().then(createWindow);
+app.whenReady().then(() => {
+    console.log('Variables de entorno cargadas:', {
+        YOUSIGN_API_KEY: process.env.YOUSIGN_API_KEY ? 'Presente' : 'No encontrada',
+        NODE_ENV: process.env.NODE_ENV,
+        // Otras variables relevantes...
+    });
+    createWindow();
+});
 
 app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') {
@@ -452,6 +465,75 @@ ipcMain.handle('get-yousign-status', async (event, procedureId) => {
             success: false,
             error: error.message
         };
+    }
+});
+
+// Añadir manejador para obtener la API key
+ipcMain.handle('get-yousign-api-key', () => {
+    const apiKey = process.env.VITE_YOUSIGN_API_KEY;
+    if (!apiKey) {
+        console.error('VITE_YOUSIGN_API_KEY no encontrada');
+        throw new Error('API key de YouSign no configurada');
+    }
+    return apiKey;
+});
+
+// Add handler for getting API URL
+ipcMain.handle('get-yousign-api-url', () => {
+    const apiUrl = process.env.VITE_YOUSIGN_API_URL;
+    if (!apiUrl) {
+        console.error('VITE_YOUSIGN_API_URL no encontrada');
+        throw new Error('URL de YouSign API no configurada');
+    }
+    return apiUrl;
+});
+
+// Añadir manejador para descargar documento firmado
+ipcMain.handle('download-signed-document', async (event, procedureId) => {
+    try {
+        const apiKey = process.env.VITE_YOUSIGN_API_KEY;
+        if (!apiKey) {
+            throw new Error('API key de YouSign no configurada');
+        }
+
+        const response = await fetch(
+            `https://api-sandbox-d3e68ba0cf.yousign.app/recipient/signature_requests/${procedureId}/documents/download`,
+            {
+                headers: {
+                    'Authorization': `Bearer ${apiKey}`,
+                    'Accept': 'application/pdf'
+                }
+            }
+        );
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Error response:', errorText);
+            throw new Error(`Error ${response.status}: ${errorText}`);
+        }
+
+        const buffer = await response.buffer();
+        return {
+            success: true,
+            data: Array.from(buffer),
+            fileName: `documento_firmado_${procedureId}.pdf`
+        };
+    } catch (error) {
+        console.error('Error downloading document:', error);
+        return {
+            success: false,
+            error: error.message
+        };
+    }
+});
+
+ipcMain.handle('open-external', async (event, url) => {
+    try {
+        await shell.openExternal(url);
+        return { success: true };
+    } catch (error) {
+        console.error('Error opening URL:', error);
+        return { success: false, error: error.message };
     }
 });
 

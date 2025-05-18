@@ -13,6 +13,7 @@ contextBridge.exposeInMainWorld('electron', {
   getPdfUrl: (fileName) => ipcRenderer.invoke('get-pdf-url', fileName)
 });
 
+
 contextBridge.exposeInMainWorld('electronAPI', {
     saveToCache: (pdfId, data, metadata) => 
         ipcRenderer.invoke('save-to-cache', pdfId, data, metadata),
@@ -40,5 +41,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
     
     // Funciones para YouSign
     sendToYouSign: (data) => ipcRenderer.invoke('send-to-yousign', data),
-    getYouSignStatus: (procedureId) => ipcRenderer.invoke('get-yousign-status', procedureId)
+    getYouSignStatus: (procedureId) => ipcRenderer.invoke('get-yousign-status', procedureId),
+    getYouSignApiKey: () => ipcRenderer.invoke('get-yousign-api-key'),
+    getYouSignApiUrl: () => ipcRenderer.invoke('get-yousign-api-url'),
+    downloadSignedDocument: (procedureId) => ipcRenderer.invoke('download-signed-document', procedureId),
+    openExternal: (url) => ipcRenderer.invoke('open-external', url),
 });

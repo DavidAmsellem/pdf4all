@@ -76,47 +76,71 @@ const DocumentSigningLog = () => {
 
             if (error) throw error;
 
-            // Agrupar por ID de procedimiento
             const grouped = data.reduce((acc, event) => {
                 const procedureId = event.metadata?.data?.signature_request?.id;
                 if (!procedureId) return acc;
 
                 if (!acc[procedureId]) {
                     acc[procedureId] = {
+                        id: procedureId,
                         events: [],
                         currentStatus: '',
                         documentName: '',
                         expiration_date: null,
                         workspace_id: '',
-                        signers: []
+                        signers: [],
+                        created_at: null
                     };
                 }
 
+                // Extraer información de signature_request
                 const signatureRequest = event.metadata?.data?.signature_request;
-                const signerInfo = event.metadata?.data?.signer?.info;
-                
-                // Actualizar información del procedimiento
-                acc[procedureId].events.push(event);
-                acc[procedureId].currentStatus = signatureRequest?.status || acc[procedureId].currentStatus;
-                acc[procedureId].documentName = signatureRequest?.name || acc[procedureId].documentName;
+                if (signatureRequest) {
+                    acc[procedureId].documentName = signatureRequest.name;
+                    acc[procedureId].currentStatus = signatureRequest.status;
+                    acc[procedureId].expiration_date = signatureRequest.expiration_date;
+                    acc[procedureId].workspace_id = signatureRequest.workspace_id;
+                    acc[procedureId].created_at = signatureRequest.created_at;
+                }
 
-                // Actualizar información del firmante si está presente
+                // Extraer información del firmante
+                const signerInfo = event.metadata?.data?.signer;
                 if (signerInfo) {
                     const signer = {
-                        id: event.metadata?.data?.signer?.id,
-                        email: signerInfo.email,
-                        firstName: signerInfo.first_name,
-                        lastName: signerInfo.last_name,
-                        status: event.metadata?.data?.signer?.status
+                        id: signerInfo.id,
+                        email: signerInfo.info?.email,
+                        firstName: signerInfo.info?.first_name,
+                        lastName: signerInfo.info?.last_name,
+                        status: signerInfo.status,
+                        signature_level: signerInfo.signature_level,
+                        locale: signerInfo.info?.locale
                     };
-                    
+
                     // Actualizar o añadir firmante
                     const existingSignerIndex = acc[procedureId].signers.findIndex(s => s.id === signer.id);
                     if (existingSignerIndex >= 0) {
-                        acc[procedureId].signers[existingSignerIndex] = signer;
+                        acc[procedureId].signers[existingSignerIndex] = {
+                            ...acc[procedureId].signers[existingSignerIndex],
+                            ...signer
+                        };
                     } else {
                         acc[procedureId].signers.push(signer);
                     }
+                }
+
+                // Añadir el evento al historial
+                acc[procedureId].events.push({
+                    id: event.id,
+                    event_name: event.metadata.event_name,
+                    event_time: event.metadata.event_time,
+                    created_at: event.created_at,
+                    metadata: event.metadata
+                });
+
+                // Verificar si necesita guardar el documento firmado
+                if (event.metadata.event_name === 'signer.done' && 
+                    !acc[procedureId].events.some(e => e.event_name === 'signature_request.archived')) {
+                    saveSignedDocument(procedureId, acc[procedureId].documentName);
                 }
 
                 return acc;
@@ -224,16 +248,18 @@ const DocumentSigningLog = () => {
     const getEventName = (eventName) => {
         const eventMap = {
             // Eventos de firma
-            'signature_request.activated': 'Solicitud de firma activada | Signature request activated',
-            'signature_request.completed': 'Solicitud de firma completada | Signature request completed',
+          
+            'signature_request.completed': 'Solicitud de firma completada',
             'signature_request.expired': 'Solicitud de firma expirada | Signature request expired',
             'signature_request.refused': 'Solicitud de firma rechazada | Signature request refused',
             'signature_request.done': 'Firma completada | Signature completed',
             
             // Eventos del firmante
-            'signer.notified': 'Firmante notificado | Signer notified',
+            
             'signer.signed': 'Firmante ha firmado | Signer has signed',
-            'signer.link_opened': 'Enlace abierto | Link opened',
+            'signer.link_opened': 'Enlace abierto ',
+            'signer.notified': 'Firmante notificado',
+            'signature_request.activated': 'Solicitud de firma activada | Se mandó el correo al firmante',
             'signer.done': 'Firmante completado | Signer completed',
             
             // Estado general
@@ -279,16 +305,29 @@ const DocumentSigningLog = () => {
                         {getStatusBadge(item.status).text}
                     </span>
                 </div>
-                <button 
-                    className="delete-button" 
-                    onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        deleteSignatureRecord(item.id);
-                    }}
-                >
-                    <i className="fas fa-trash"></i>
-                </button>
+                <div className="document-actions">
+                    {item.status === 'done' && (
+                        <button 
+                            className="download-button"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                downloadSignedDocument(item.id);
+                            }}
+                        >
+                            <i className="fas fa-download"></i>
+                        </button>
+                    )}
+                    <button 
+                        className="delete-button" 
+                        onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            deleteSignatureRecord(item.id);
+                        }}
+                    >
+                        <i className="fas fa-trash"></i>
+                    </button>
+                </div>
             </div>
 
             <div className="document-meta">
@@ -518,6 +557,79 @@ const DocumentSigningLog = () => {
             setLoading(false);
         }
     };
+
+    const saveSignedDocument = async (procedureId, documentName) => {
+        try {
+            // 1. Obtener el documento firmado de YouSign usando la API key
+            const YOUSIGN_API_KEY = await window.electronAPI.getYouSignApiKey();
+            
+            const response = await fetch(`https://api.yousign.com/v3/signature_requests/${procedureId}/files/download`, {
+                headers: {
+                    'Authorization': `Bearer ${YOUSIGN_API_KEY}`
+                }
+            });
+            
+            if (!response.ok) {
+                throw new Error(`Error al obtener el documento: ${response.statusText}`);
+            }
+
+            const pdfBlob = await response.blob();
+            const buffer = await pdfBlob.arrayBuffer();
+
+            // 2. Guardar en el bucket de PDFs existente
+            const signedFileName = `signed_${documentName}`;
+            const { data, error } = await supabase.storage
+                .from('pdfs')
+                .upload(`signed/${procedureId}/${signedFileName}`, buffer, {
+                    contentType: 'application/pdf',
+                    upsert: true
+                });
+
+            if (error) throw error;
+
+            // 3. Actualizar yousign_events con la referencia al PDF firmado
+            const { error: updateError } = await supabase
+                .from('yousign_events')
+                .insert({
+                    metadata: {
+                        event_name: 'signature_request.archived',
+                        data: {
+                            signature_request: {
+                                id: procedureId,
+                                status: 'archived'
+                            },
+                            signed_file: {
+                                path: data.path,
+                                name: signedFileName
+                            }
+                        }
+                    }
+                });
+
+            if (updateError) throw updateError;
+
+            console.log('Documento firmado guardado y registrado correctamente');
+        } catch (error) {
+            console.error('Error al guardar el documento firmado:', error);
+            throw error;
+        }
+    };
+
+    // Añadir la función de descarga después de saveSignedDocument
+const downloadSignedDocument = async (procedureId) => {
+    try {
+        // URL del workspace de YouSign
+        const workspaceUrl = 'https://yousign.app/auth/workspace/requests';
+        
+        // Usar la API de Electron para abrir la URL en el navegador predeterminado
+        await window.electronAPI.openExternal(workspaceUrl);
+        
+        console.log('Portal de YouSign abierto en el navegador');
+    } catch (error) {
+        console.error('Error al abrir el portal:', error);
+        alert(`Error al abrir el portal de YouSign: ${error.message}`);
+    }
+};
 
     if (loading) {
         return (

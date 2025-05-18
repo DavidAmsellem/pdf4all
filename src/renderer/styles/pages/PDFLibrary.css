@@ -283,9 +283,6 @@
   transition: transform 0.5s; /* Transición para el movimiento del brillo */
 }
 
-.library-card:hover::before {
-
-}
 
 /* Efecto hover general para la tarjeta de biblioteca (complementa el brillo) */
 .library-card:hover {
